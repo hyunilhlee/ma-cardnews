@@ -21,10 +21,10 @@ app = FastAPI(
     debug=settings.DEBUG
 )
 
-# CORS 설정
+# CORS 설정 - Vercel 도메인 모두 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # 모든 Vercel 도메인 허용
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
