@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     
     # OpenAI 설정
     OPENAI_API_KEY: str
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MODEL: str = "gpt-4o-mini"  # 기본 모델
     
     # Firebase 설정
     FIREBASE_PROJECT_ID: str = "cardnews-dev"
