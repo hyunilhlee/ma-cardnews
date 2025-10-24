@@ -1,66 +1,95 @@
 """AI 프롬프트 템플릿"""
 
-# 요약 프롬프트
+# 요약 프롬프트 (다국어 지원)
 SUMMARIZE_PROMPT = """
-다음 텍스트를 {max_length}자 이내로 핵심 내용만 요약해주세요.
-카드뉴스에 사용될 요약이므로, 명확하고 간결하게 작성해주세요.
+**CRITICAL INSTRUCTION: You MUST respond in the SAME LANGUAGE as the input text below.**
+- If the text below is in English → Respond in English
+- If the text below is in Korean → Respond in Korean
+- If the text below is in Japanese → Respond in Japanese
+- DO NOT translate or change the language!
 
-텍스트:
+Summarize the following text into key points within {max_length} characters.
+The summary will be used for card news, so please make it clear and concise.
+
+**중요 지시: 반드시 아래 입력 텍스트와 동일한 언어로 응답하세요.**
+- 아래 텍스트가 영어면 → 영어로 응답
+- 아래 텍스트가 한국어면 → 한국어로 응답
+- 언어를 번역하거나 변경하지 마세요!
+
+다음 텍스트를 {max_length}자 이내로 핵심 내용만 요약해주세요.
+
+Text / 텍스트:
 {text}
 
-요약:
+Summary (in the SAME language as above text) / 요약 (위 텍스트와 동일한 언어로):
 """
 
-# 키워드 추출 프롬프트
+# 키워드 추출 프롬프트 (다국어 지원)
 KEYWORD_EXTRACTION_PROMPT = """
+Extract {count} key keywords from the following text.
+Separate them with commas.
+If the text is in Korean, respond in Korean. If in English, respond in English.
+
 다음 텍스트에서 핵심 키워드 {count}개를 추출해주세요.
 쉼표로 구분하여 나열해주세요.
+텍스트가 한국어면 한국어로, 영어면 영어로 응답하세요.
 
-텍스트:
+Text / 텍스트:
 {text}
 
-키워드:
+Keywords / 키워드:
 """
 
-# 카드뉴스 생성 프롬프트
+# 카드뉴스 생성 프롬프트 (다국어 지원)
 CARD_GENERATION_PROMPT = """
-다음 요약과 원문을 바탕으로 {card_count}개의 카드뉴스를 제작해주세요.
+**CRITICAL INSTRUCTION: ALL card content (title and content fields) MUST be in the SAME LANGUAGE as the original text below.**
+- If original text is in English → Write ALL cards in English
+- If original text is in Korean → Write ALL cards in Korean
+- If original text is in Japanese → Write ALL cards in Japanese
+- DO NOT translate or mix languages!
 
-요약:
+**중요 지시: 모든 카드 내용(title과 content 필드)은 반드시 아래 원문과 동일한 언어로 작성하세요.**
+- 원문이 영어면 → 모든 카드를 영어로 작성
+- 원문이 한국어면 → 모든 카드를 한국어로 작성
+- 언어를 번역하거나 섞지 마세요!
+
+Create {card_count} card news slides based on the following content.
+
+Summary / 요약:
 {summary}
 
-원문:
+Original Text / 원문:
 {original_text}
 
-다음 JSON 형식으로 응답해주세요:
+Respond in the following JSON format:
 {{
   "cards": [
     {{
       "type": "title",
-      "title": "제목",
-      "content": "부제목 또는 설명"
+      "title": "Main Title (in SAME language as original text)",
+      "content": "Subtitle (in SAME language as original text)"
     }},
     {{
       "type": "content",
-      "title": "섹션 제목",
-      "content": "섹션 내용 (2-3문장)"
+      "title": "Section Title (in SAME language as original text)",
+      "content": "Section content (in SAME language as original text)"
     }},
     ...
     {{
       "type": "closing",
-      "title": "마무리 제목",
-      "content": "마무리 멘트"
+      "title": "Closing Title (in SAME language as original text)",
+      "content": "Closing message (in SAME language as original text)"
     }}
   ]
 }}
 
-규칙:
-1. 첫 번째 카드는 반드시 "title" 타입
-2. 마지막 카드는 반드시 "closing" 타입
-3. 나머지는 "content" 타입
-4. 각 카드의 내용은 간결하고 명확하게
-5. 제목은 15자 이내, 내용은 100자 이내
-6. 반드시 유효한 JSON 형식으로만 응답
+Rules:
+1. First card must be "title" type
+2. Last card must be "closing" type
+3. Middle cards should be "content" type
+4. Keep content clear and concise
+5. Must respond in valid JSON format only
+6. **CRITICAL: Every title and content field MUST be in the SAME LANGUAGE as the original text above!**
 """
 
 # 채팅 시스템 프롬프트

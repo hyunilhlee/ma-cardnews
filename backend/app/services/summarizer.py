@@ -5,6 +5,7 @@ from typing import Dict, List
 from app.config import settings
 from app.utils.prompts import SUMMARIZE_PROMPT, KEYWORD_EXTRACTION_PROMPT
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -65,13 +66,25 @@ class AISummarizer:
         Returns:
             요약문
         """
+        # 언어 감지
+        detected_lang = self._detect_language(text)
+        logger.info(f"Detected language: {detected_lang}")
+        
+        # 언어별 시스템 메시지
+        system_messages = {
+            'en': "You are a professional content summarization expert. You MUST respond in English ONLY. Do not translate to other languages.",
+            'ko': "당신은 전문 콘텐츠 요약 전문가입니다. 반드시 한국어로만 응답하세요. 다른 언어로 번역하지 마세요.",
+            'ja': "あなたはプロのコンテンツ要約専門家です。必ず日本語のみで応答してください。"
+        }
+        
+        system_message = system_messages.get(detected_lang, system_messages['en'])
         prompt = SUMMARIZE_PROMPT.format(text=text, max_length=max_length)
         
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "당신은 전문 콘텐츠 요약 전문가입니다."},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,  # 일관성 있는 요약을 위해 낮은 온도
@@ -95,13 +108,24 @@ class AISummarizer:
         Returns:
             키워드 리스트
         """
+        # 언어 감지
+        detected_lang = self._detect_language(text)
+        
+        # 언어별 시스템 메시지
+        system_messages = {
+            'en': "You are a keyword extraction expert. Extract keywords in English ONLY.",
+            'ko': "당신은 키워드 추출 전문가입니다. 키워드를 한국어로만 추출하세요.",
+            'ja': "あなたはキーワード抽出の専門家です。日本語のみでキーワードを抽出してください。"
+        }
+        
+        system_message = system_messages.get(detected_lang, system_messages['en'])
         prompt = KEYWORD_EXTRACTION_PROMPT.format(text=text, count=count)
         
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "당신은 키워드 추출 전문가입니다."},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
@@ -154,4 +178,34 @@ class AISummarizer:
             return text
         
         return text[:max_chars] + "..."
+    
+    def _detect_language(self, text: str) -> str:
+        """
+        텍스트 언어 감지 (간단한 휴리스틱)
+        
+        Args:
+            text: 분석할 텍스트
+            
+        Returns:
+            언어 코드 ('en', 'ko', 'ja', etc.)
+        """
+        # 한글 문자 비율 확인
+        korean_chars = len(re.findall(r'[가-힣]', text))
+        # 일본어 문자 비율 확인
+        japanese_chars = len(re.findall(r'[ぁ-んァ-ヶー一-龯]', text))
+        # 전체 문자 수 (공백 제외)
+        total_chars = len(re.sub(r'\s', '', text))
+        
+        if total_chars == 0:
+            return 'en'  # 기본값
+        
+        korean_ratio = korean_chars / total_chars
+        japanese_ratio = japanese_chars / total_chars
+        
+        if korean_ratio > 0.3:
+            return 'ko'
+        elif japanese_ratio > 0.3:
+            return 'ja'
+        else:
+            return 'en'
 

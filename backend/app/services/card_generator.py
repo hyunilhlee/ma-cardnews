@@ -6,6 +6,7 @@ from app.config import settings
 from app.utils.prompts import CARD_GENERATION_PROMPT
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class CardNewsGenerator:
                 messages=[
                     {
                         "role": "system", 
-                        "content": "당신은 카드뉴스 제작 전문가입니다. 주어진 내용을 카드뉴스 형식으로 구조화합니다. 반드시 유효한 JSON 형식으로만 응답하세요."
+                        "content": "You are a card news creation expert. Structure the given content into card news format. Always respond in valid JSON format only. Respond in the SAME LANGUAGE as the input text. 당신은 카드뉴스 제작 전문가입니다. 주어진 내용을 카드뉴스 형식으로 구조화합니다. 반드시 유효한 JSON 형식으로만 응답하세요. 입력 텍스트와 동일한 언어로 응답하세요."
                     },
                     {"role": "user", "content": prompt}
                 ],
