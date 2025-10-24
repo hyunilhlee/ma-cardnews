@@ -72,7 +72,7 @@ class ChatService:
                 functions=[  # Function calling으로 섹션 수정 명령 구조화
                     {
                         "name": "modify_section",
-                        "description": "특정 카드 섹션의 내용을 수정",
+                        "description": "특정 카드 섹션의 내용을 수정합니다.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -94,7 +94,7 @@ class ChatService:
                     },
                     {
                         "name": "reorder_sections",
-                        "description": "카드 섹션의 순서를 변경",
+                        "description": "카드 섹션의 순서를 변경합니다.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -108,58 +108,17 @@ class ChatService:
                         }
                     },
                     {
-                        "name": "modify_all_tone",
-                        "description": "모든 카드의 톤(어조)을 변경합니다. 예: 전문적으로, 친근하게, 캐주얼하게, 격식있게, 설득력있게",
+                        "name": "modify_all_content",
+                        "description": "모든 카드의 내용을 사용자의 자연어 요청에 따라 수정합니다. 존댓말/반말 변경, 톤 변경, 길이 조절, 스타일 변경, 이모지 추가 등 모든 전체 수정 요청에 사용합니다.",
                         "parameters": {
                             "type": "object",
                             "properties": {
-                                "tone": {
-                                    "type": "string",
-                                    "description": "적용할 톤 (예: '전문적', '친근함', '캐주얼', '격식있음', '설득력있음')"
-                                },
                                 "instruction": {
                                     "type": "string",
-                                    "description": "추가 지시사항 (선택)"
+                                    "description": "사용자의 자연어 요청을 그대로 전달 (예: '존댓말로 바꿔줘', '더 전문적으로 수정해줘', '이모지 추가해줘', '간결하게 줄여줘' 등)"
                                 }
                             },
-                            "required": ["tone"]
-                        }
-                    },
-                    {
-                        "name": "modify_all_length",
-                        "description": "모든 카드의 길이를 조절합니다. 예: 더 간결하게, 더 상세하게",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "direction": {
-                                    "type": "string",
-                                    "enum": ["shorter", "longer"],
-                                    "description": "'shorter' (더 짧게) 또는 'longer' (더 길게)"
-                                },
-                                "instruction": {
-                                    "type": "string",
-                                    "description": "추가 지시사항 (선택)"
-                                }
-                            },
-                            "required": ["direction"]
-                        }
-                    },
-                    {
-                        "name": "modify_all_style",
-                        "description": "모든 카드의 작성 스타일을 변경합니다. 예: 스토리텔링, 질문형식, 리스트형식, 데이터중심",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "style": {
-                                    "type": "string",
-                                    "description": "적용할 스타일 (예: '스토리텔링', '질문형식', '리스트형식', '데이터중심', '비유적표현')"
-                                },
-                                "instruction": {
-                                    "type": "string",
-                                    "description": "추가 지시사항 (선택)"
-                                }
-                            },
-                            "required": ["style"]
+                            "required": ["instruction"]
                         }
                     }
                 ]
@@ -269,57 +228,19 @@ class ChatService:
                     'action_taken': 'none'
                 }
         
-        elif function_name == "modify_all_tone":
-            tone = arguments.get('tone', '')
+        elif function_name == "modify_all_content":
             instruction = arguments.get('instruction', '')
             
-            # AI로 전체 카드 톤 변경
+            # AI로 전체 카드 내용 수정
             updated_sections = self._modify_all_with_ai(
                 current_sections,
-                f"모든 카드의 톤을 '{tone}'으로 변경해주세요. {instruction}",
-                "tone"
+                instruction
             )
             
             return {
-                'ai_response': f"모든 카드를 '{tone}' 톤으로 수정했습니다.",
+                'ai_response': f"✅ 모든 카드를 '{instruction}' 요청에 따라 수정했습니다.",
                 'updated_sections': updated_sections,
-                'action_taken': 'modify_all_tone'
-            }
-        
-        elif function_name == "modify_all_length":
-            direction = arguments.get('direction', 'shorter')
-            instruction = arguments.get('instruction', '')
-            
-            direction_text = "더 간결하고 짧게" if direction == "shorter" else "더 상세하고 길게"
-            
-            # AI로 전체 카드 길이 조절
-            updated_sections = self._modify_all_with_ai(
-                current_sections,
-                f"모든 카드를 {direction_text} 수정해주세요. {instruction}",
-                "length"
-            )
-            
-            return {
-                'ai_response': f"모든 카드를 {direction_text} 수정했습니다.",
-                'updated_sections': updated_sections,
-                'action_taken': 'modify_all_length'
-            }
-        
-        elif function_name == "modify_all_style":
-            style = arguments.get('style', '')
-            instruction = arguments.get('instruction', '')
-            
-            # AI로 전체 카드 스타일 변경
-            updated_sections = self._modify_all_with_ai(
-                current_sections,
-                f"모든 카드를 '{style}' 스타일로 재작성해주세요. {instruction}",
-                "style"
-            )
-            
-            return {
-                'ai_response': f"모든 카드를 '{style}' 스타일로 수정했습니다.",
-                'updated_sections': updated_sections,
-                'action_taken': 'modify_all_style'
+                'action_taken': 'modify_all_content'
             }
         
         return {
@@ -331,16 +252,14 @@ class ChatService:
     def _modify_all_with_ai(
         self, 
         current_sections: List[Dict], 
-        instruction: str,
-        modification_type: str
+        instruction: str
     ) -> List[Dict]:
         """
         AI를 사용하여 모든 섹션을 일괄 수정
         
         Args:
             current_sections: 현재 섹션 리스트
-            instruction: 수정 지시사항
-            modification_type: 수정 유형 (tone, length, style)
+            instruction: 사용자의 자연어 수정 요청
             
         Returns:
             수정된 섹션 리스트
@@ -354,33 +273,50 @@ class ChatService:
             } for s in current_sections], ensure_ascii=False, indent=2)
             
             prompt = f"""
-다음 카드뉴스 섹션들을 수정해주세요.
+사용자 요청: "{instruction}"
 
-{instruction}
+위 요청에 따라 아래 카드뉴스의 모든 섹션을 **반드시 수정**해주세요.
 
 현재 섹션:
 {sections_json}
 
-중요:
-1. 카드의 개수는 유지해주세요 ({len(current_sections)}개)
-2. 각 카드의 type은 유지해주세요
-3. 수정된 결과를 다음 JSON 형식으로만 응답해주세요:
+수정 지침:
+1. **중요**: 사용자 요청을 정확히 반영하여 내용을 **반드시 변경**해야 합니다
+2. 카드의 개수는 {len(current_sections)}개로 유지
+3. 각 카드의 type은 변경하지 마세요
+4. title과 content를 요청에 맞게 수정하세요
+
+예시:
+- "존댓말로 바꿔줘" → "합니다", "~세요" 등 존댓말 사용
+- "반말로 바꿔줘" → "한다", "~야" 등 반말 사용
+- "전문적으로" → 전문 용어, 격식있는 표현 사용
+- "친근하게" → 편안한 말투, 공감하는 표현 사용
+- "간결하게" → 핵심만 남기고 축약
+- "상세하게" → 설명과 예시 추가
+- "이모지 추가" → 적절한 이모지(🎉✨💡📌 등) 활용
+- "스토리텔링" → 이야기 형식으로 재구성
+- "질문 형식" → 질문으로 시작하는 구조
+
+**반드시** 다음 JSON 형식으로만 응답하세요:
 
 {{
   "sections": [
-    {{"type": "...", "title": "...", "content": "..."}},
+    {{"type": "title", "title": "수정된 제목", "content": "수정된 내용"}},
+    {{"type": "content", "title": "수정된 제목", "content": "수정된 내용"}},
     ...
   ]
 }}
+
+⚠️ 주의: 원본과 동일한 내용을 반환하지 마세요! 반드시 요청에 따라 수정해야 합니다!
 """
             
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "당신은 카드뉴스 내용을 수정하는 전문가입니다. 항상 유효한 JSON 형식으로 응답해주세요."},
+                    {"role": "system", "content": "당신은 카드뉴스 내용을 수정하는 전문가입니다. 사용자의 요청을 정확히 반영하여 내용을 반드시 변경해야 합니다. 항상 유효한 JSON 형식으로 응답하세요."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=0.8,  # 창의성을 위해 약간 높임
                 max_tokens=2000
             )
             
