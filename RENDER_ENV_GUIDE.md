@@ -10,7 +10,7 @@
 ### 🎨 권장 (4개)
 | Key | Value | 설명 |
 |-----|-------|------|
-| `OPENAI_MODEL` | `gpt-4o-mini` | ⚠️ 설정 안 하면 `gpt-5-nano` 에러 발생! |
+| `OPENAI_MODEL` | `gpt-4.1-nano` | ⚠️ 2025년 최신 모델 (가장 빠르고 저렴) |
 | `FIREBASE_PROJECT_ID` | `ma-cardnews` | Firebase 프로젝트 ID |
 | `DEBUG` | `False` | 프로덕션 모드 |
 | `LOG_LEVEL` | `INFO` | 로그 수준 |
@@ -55,8 +55,13 @@ sk-proj-YOUR_OPENAI_API_KEY_HERE
 
 #### OPENAI_MODEL (권장!)
 ```
-gpt-4o-mini
+gpt-4.1-nano
 ```
+💡 **선택 가능한 모델**:
+- `gpt-4.1-nano` (기본, 가장 저렴: $0.10/1M)
+- `gpt-4.1-mini` ($0.15/1M)
+- `gpt-5-nano` ($0.20/1M)
+- `gpt-5-mini` ($0.25/1M)
 
 #### FIREBASE_PROJECT_ID (권장)
 ```
