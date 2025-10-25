@@ -1,6 +1,6 @@
 # 📰 CardNews AI Generator
 
-AI 기반 카드뉴스 자동 생성 서비스 - Phase 1 (MVP)
+AI 기반 카드뉴스 자동 생성 서비스
 
 ## 🎯 프로젝트 개요
 
@@ -8,10 +8,11 @@ AI 기반 카드뉴스 자동 생성 서비스 - Phase 1 (MVP)
 
 ### 주요 기능
 
-- ✅ **다양한 소스 입력**: URL 링크 또는 텍스트 직접 입력
-- ✅ **AI 자동 요약**: GPT-4o-mini를 활용한 핵심 내용 추출 및 키워드 분석
-- ✅ **자동 카드 생성**: 적절한 구조와 디자인으로 카드뉴스 자동 생성
-- ✅ **자연어 편집**: AI와 대화하며 내용을 쉽게 수정하고 개선
+- ✅ **다중 URL 입력**: 여러 URL을 한번에 입력하여 통합 카드뉴스 생성
+- ✅ **다국어 지원**: 영어/한국어/일본어 자동 감지 및 처리
+- ✅ **AI 자동 요약**: GPT-4.1/GPT-5 시리즈를 활용한 핵심 내용 추출
+- ✅ **자연어 편집**: "전체를 존댓말로 바꿔줘" 같은 자연어 명령으로 쉽게 수정
+- ✅ **AI 모델 선택**: 4가지 모델 중 선택 가능 (속도/품질/비용 균형)
 
 ## 🛠️ 기술 스택
 
@@ -20,205 +21,143 @@ AI 기반 카드뉴스 자동 생성 서비스 - Phase 1 (MVP)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand
-- **HTTP Client**: Axios
-- **Notifications**: react-hot-toast
+- **Deployment**: Vercel
 
 ### Backend
-- **Framework**: FastAPI
-- **Language**: Python 3.10+
-- **AI**: OpenAI GPT-4o-mini
+- **Framework**: FastAPI (Python 3.11+)
+- **AI**: OpenAI (GPT-4.1-nano, GPT-4.1-mini, GPT-5-nano, GPT-5-mini)
 - **Web Scraping**: newspaper3k, BeautifulSoup4
-- **Validation**: Pydantic
-- **Database**: Firebase Firestore (선택사항)
+- **Deployment**: Render
 
-## 📂 프로젝트 구조
+## 🚀 빠른 시작
 
-```
-CardNews/
-├── backend/                    # FastAPI 백엔드
-│   ├── app/
-│   │   ├── config.py          # 환경 설정
-│   │   ├── main.py            # FastAPI 앱
-│   │   ├── models/            # Pydantic 모델
-│   │   ├── services/          # 비즈니스 로직
-│   │   ├── routers/           # API 라우터
-│   │   └── utils/             # 유틸리티
-│   ├── requirements.txt       # Python 의존성
-│   └── .env                   # 환경 변수
-│
-├── frontend/                  # Next.js 프론트엔드
-│   ├── app/                   # Next.js 페이지
-│   ├── components/            # React 컴포넌트
-│   │   ├── common/           # 공통 컴포넌트
-│   │   ├── source/           # 소스 입력
-│   │   ├── summary/          # 요약 표시
-│   │   ├── cardnews/         # 카드뉴스
-│   │   ├── chat/             # AI 채팅
-│   │   └── layout/           # 레이아웃
-│   ├── lib/                  # 라이브러리
-│   │   ├── types/            # TypeScript 타입
-│   │   ├── services/         # API 서비스
-│   │   └── store/            # Zustand 스토어
-│   └── .env.local            # 환경 변수
-│
-├── PRD.md                    # 제품 요구사항 문서
-├── 개발문서.md                # 개발 가이드
-└── TODO.md                   # 개발 체크리스트
+### 1. 환경 변수 설정
+
+**Backend** (`backend/.env`):
+```env
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4.1-nano
+FIREBASE_PROJECT_ID=your-project-id
 ```
 
-## 🚀 시작하기
+**Frontend** (`frontend/.env.local`):
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+```
 
-### 1. Backend 설정 및 실행
+### 2. 백엔드 실행
 
 ```bash
-# 백엔드 디렉토리로 이동
 cd backend
-
-# Python 가상환경 생성 및 활성화
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 의존성 설치
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# 환경 변수 설정 (.env 파일 생성)
-# OPENAI_API_KEY, FIREBASE_PROJECT_ID 등 설정 필요
-
-# 서버 실행
-python -m uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload
 ```
 
-**Backend API**: http://localhost:8000  
-**API 문서**: http://localhost:8000/docs
-
-### 2. Frontend 설정 및 실행
+### 3. 프론트엔드 실행
 
 ```bash
-# 프론트엔드 디렉토리로 이동
 cd frontend
-
-# 의존성 설치
 npm install
-
-# 환경 변수 설정 (.env.local 파일)
-# NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# 개발 서버 실행
 npm run dev
 ```
 
-**Frontend**: http://localhost:3000
+### 4. 접속
 
-## 📖 사용 방법
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
-### Step 1: 소스 입력
-1. 홈페이지 접속 (http://localhost:3000)
-2. URL 링크 또는 텍스트 입력
-3. "카드뉴스 만들기" 버튼 클릭
+## 📁 프로젝트 구조
 
-### Step 2: 요약 확인
-1. AI가 자동으로 생성한 요약 확인
-2. 핵심 키워드 및 권장 카드 수 확인
-3. "카드뉴스 생성하기" 버튼 클릭
-
-### Step 3: 편집 및 완성
-1. 자동 생성된 카드뉴스 확인
-2. AI 채팅으로 내용 수정
-   - 예: "첫 번째 카드의 제목을 더 강렬하게 바꿔줘"
-   - 예: "두 번째와 세 번째 카드의 순서를 바꿔줘"
-3. 실시간으로 반영되는 카드 확인
-
-## 🔧 환경 변수 설정
-
-### Backend (.env)
-```env
-# OpenAI API
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=gpt-4o-mini
-
-# Firebase (선택사항)
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_PRIVATE_KEY_PATH=./serviceAccountKey.json
-
-# Backend 설정
-BACKEND_PORT=8000
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-MAX_TEXT_LENGTH=10000
-RATE_LIMIT_PER_MINUTE=10
-DEBUG=True
-LOG_LEVEL=INFO
+```
+CardNews/
+├── backend/          # FastAPI 백엔드
+│   ├── app/
+│   │   ├── config.py
+│   │   ├── main.py
+│   │   ├── models/
+│   │   ├── services/
+│   │   ├── routers/
+│   │   └── utils/
+│   └── requirements.txt
+│
+├── frontend/         # Next.js 프론트엔드
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── package.json
+│
+├── docs/             # 상세 문서
+│   ├── PRD.md        # 제품 기획서
+│   └── 개발문서.md    # 개발 가이드
+│
+├── README.md         # 프로젝트 소개 (이 파일)
+└── TODO.md           # 진행 상황 및 체크리스트
 ```
 
-### Frontend (.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+## 🌐 배포된 서비스
+
+- **Frontend**: https://frontend-rkv3swwi7-hyunils-projects.vercel.app
+- **Backend API**: https://ma-cardnews-api.onrender.com
+
+## 📚 문서
+
+- **제품 기획서 (PRD)**: [`docs/PRD.md`](docs/PRD.md)
+- **개발 문서**: [`docs/개발문서.md`](docs/개발문서.md)
+- **진행 상황**: [`TODO.md`](TODO.md)
+
+## 🎨 주요 특징
+
+### 1️⃣ 다중 URL 입력
+여러 개의 URL을 줄바꿈으로 구분하여 입력하면 자동으로 통합된 카드뉴스를 생성합니다.
+
+### 2️⃣ AI 모델 선택
+| 모델 | 속도 | 품질 | 가격 | 추천 |
+|------|------|------|------|------|
+| GPT-4.1 Nano | 빠름 | 좋음 | 저렴 | ✅ 기본 |
+| GPT-4.1 Mini | 빠름 | 좋음 | 보통 | |
+| GPT-5 Nano | 빠름 | 더 좋음 | 보통 | |
+| GPT-5 Mini | 보통 | 더 좋음 | 높음 | |
+
+### 3️⃣ 자연어 편집
+```
+"전체를 존댓말로 바꿔줘"
+"전체를 더 전문적으로 만들어줘"
+"전체에 이모지를 추가해줘"
+"전체를 간결하게 줄여줘"
 ```
 
-## 📊 API 엔드포인트
+### 4️⃣ 다국어 지원
+영어, 한국어, 일본어를 자동으로 감지하여 동일한 언어로 카드뉴스를 생성합니다.
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| **POST** | `/api/projects` | 프로젝트 생성 |
-| **GET** | `/api/projects/{id}` | 프로젝트 조회 |
-| **POST** | `/api/projects/{id}/summarize` | 요약 생성 |
-| **POST** | `/api/projects/{id}/sections` | 카드 섹션 생성 |
-| **GET** | `/api/projects/{id}/sections` | 섹션 목록 조회 |
-| **POST** | `/api/chat` | AI 채팅 메시지 전송 |
+## 🔧 개발 현황
 
-자세한 API 문서는 http://localhost:8000/docs 참고
+### Phase 1 (MVP) - ✅ 완료
+- [x] 소스 입력 (URL/텍스트)
+- [x] AI 요약 및 키워드 추출
+- [x] 카드뉴스 자동 생성
+- [x] AI 채팅을 통한 자연어 편집
+- [x] 다중 URL 지원
+- [x] 다국어 지원
+- [x] AI 모델 선택
 
-## 🧪 테스트
-
-### Backend 테스트
-```bash
-cd backend
-pytest --cov=app tests/
-```
-
-### Frontend 빌드
-```bash
-cd frontend
-npm run build
-```
-
-## 🔒 보안 주의사항
-
-- ⚠️ **OpenAI API 키**는 절대 Git에 커밋하지 마세요
-- `.env` 파일은 `.gitignore`에 포함되어 있습니다
-- 프로덕션 환경에서는 반드시 환경 변수를 안전하게 관리하세요
-
-## 📝 개발 진행 상황
-
-현재 **Phase 1 (MVP)** 개발이 완료되었습니다.
-
-✅ **완료된 작업**
-- Backend API 구현 (FastAPI)
-- Frontend UI 구현 (Next.js)
-- AI 요약 및 카드 생성 기능
-- AI 채팅 기반 편집 기능
-- 반응형 디자인
-
-⏳ **예정된 작업** (Phase 2)
-- 자동 소스 크롤링
-- 다양한 요약 버전 제안
-- 디자인 커스터마이징
-- 이미지 Export 기능
-- Firebase 배포
-
-자세한 내용은 [TODO.md](./TODO.md) 참고
-
-## 👥 기여
-
-버그 리포트, 기능 제안, Pull Request를 환영합니다!
+### Phase 2 (Release) - 🚧 진행 중
+- [ ] 디자인 템플릿 선택
+- [ ] 이미지 생성 및 편집
+- [ ] 카드뉴스 이미지 내보내기
+- [ ] 사용자 인증 및 프로젝트 저장
+- [ ] 소스 자동 검색 및 크롤링
 
 ## 📄 라이선스
 
 MIT License
 
-## 📞 문의
+## 👤 작성자
 
-문제가 발생하거나 질문이 있으시면 이슈를 등록해주세요.
+Hyunil Lee
 
 ---
 
-**Made with ❤️ and AI**
+**Note**: 이 프로젝트는 Phase 1 (MVP)이 완료된 상태입니다. 상세한 개발 가이드는 [`docs/개발문서.md`](docs/개발문서.md)를 참고하세요.
