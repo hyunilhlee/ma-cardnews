@@ -12,10 +12,10 @@
 - [x] **AI 처리**
   - [x] OpenAI API 통합
   - [x] AI 모델 선택 (4개 모델)
-    - [x] GPT-4o Mini (기본) ⭐ 실제 OpenAI 모델
-    - [x] GPT-4o
-    - [x] O1 Mini
-    - [x] GPT-4 Turbo
+    - [x] GPT-4.1 Nano (기본)
+    - [x] GPT-4.1 Mini
+    - [x] GPT-5 Nano
+    - [x] GPT-5 Mini
   - [x] 텍스트 요약 생성
   - [x] 키워드 자동 추출
   - [x] 추천 카드 수 계산

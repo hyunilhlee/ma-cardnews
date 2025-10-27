@@ -9,11 +9,15 @@ class Settings(BaseSettings):
     
     # OpenAI 설정
     OPENAI_API_KEY: str
-    OPENAI_MODEL: str = "gpt-4o-mini"  # 기본 모델 (가장 빠르고 저렴)
+    OPENAI_MODEL: str = "gpt-4.1-nano"  # 기본 모델 (가장 빠르고 저렴)
     
     # Firebase 설정
-    FIREBASE_PROJECT_ID: str = "cardnews-dev"
-    FIREBASE_PRIVATE_KEY_PATH: str = "./serviceAccountKey.json"
+    FIREBASE_PROJECT_ID: str = "ma-cardnews"
+    FIREBASE_CREDENTIALS_PATH: str = "./serviceAccountKey.json"
+    
+    # 크롤링 설정 (Phase 2)
+    DEFAULT_CRAWL_INTERVAL: int = 30  # 분 단위
+    MAX_CONCURRENT_CRAWLS: int = 3
     
     # Backend 설정
     BACKEND_PORT: int = 8000

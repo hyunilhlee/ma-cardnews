@@ -30,3 +30,8 @@ pytest-cov==6.0.0
 pytest-asyncio==0.24.0
 httpx==0.28.1
 
+# Phase 2: RSS 크롤링 & 스케줄링
+feedparser==6.0.11
+APScheduler==3.10.4
+tenacity==8.5.0
+

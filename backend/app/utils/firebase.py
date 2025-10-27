@@ -27,7 +27,7 @@ def initialize_firebase():
     
     try:
         # 서비스 계정 키 파일 경로
-        cred_path = os.getenv('FIREBASE_PRIVATE_KEY_PATH', './serviceAccountKey.json')
+        cred_path = os.getenv('FIREBASE_CREDENTIALS_PATH', './serviceAccountKey.json')
         
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
@@ -311,4 +311,228 @@ def get_conversations(project_id: str, limit: int = 10) -> List[Dict]:
     conversations.reverse()
     
     return conversations
+
+
+# Phase 2: Sites CRUD
+
+def create_site(data: Dict) -> Dict:
+    """
+    사이트 생성
+    
+    Args:
+        data: 사이트 데이터
+        
+    Returns:
+        생성된 사이트
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    site_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+    
+    site_data = {
+        'id': site_id,
+        'name': data.get('name'),
+        'url': data.get('url'),
+        'rss_url': data.get('rss_url'),
+        'crawl_interval': data.get('crawl_interval', 30),
+        'status': data.get('status', 'inactive'),
+        'last_crawled_at': None,
+        'next_crawl_at': None,
+        'total_crawls': 0,
+        'success_count': 0,
+        'error_count': 0,
+        'total_posts_found': 0,
+        'created_at': now,
+        'updated_at': now
+    }
+    
+    db.collection('sites').document(site_id).set(site_data)
+    logger.info(f"Site created: {site_id}")
+    
+    return site_data
+
+
+def get_site(site_id: str) -> Optional[Dict]:
+    """사이트 조회"""
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    doc = db.collection('sites').document(site_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def get_all_sites() -> List[Dict]:
+    """모든 사이트 조회"""
+    db = get_db()
+    if db is None:
+        return []
+    
+    sites_ref = db.collection('sites').order_by('created_at', direction=firestore.Query.DESCENDING)
+    sites = []
+    for doc in sites_ref.stream():
+        sites.append(doc.to_dict())
+    
+    return sites
+
+
+def update_site(site_id: str, data: Dict) -> Dict:
+    """사이트 업데이트"""
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    data['updated_at'] = datetime.utcnow()
+    
+    db.collection('sites').document(site_id).update(data)
+    logger.info(f"Site updated: {site_id}")
+    
+    return get_site(site_id)
+
+
+def delete_site(site_id: str):
+    """사이트 삭제"""
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    db.collection('sites').document(site_id).delete()
+    logger.info(f"Site deleted: {site_id}")
+
+
+# Phase 2: CrawlLogs CRUD
+
+def create_crawl_log(data: Dict) -> Dict:
+    """
+    크롤링 로그 생성
+    
+    Args:
+        data: 로그 데이터
+        
+    Returns:
+        생성된 로그
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    log_id = str(uuid.uuid4())
+    
+    log_data = {
+        'id': log_id,
+        'site_id': data.get('site_id'),
+        'site_name': data.get('site_name'),
+        'status': data.get('status', 'running'),
+        'posts_found': data.get('posts_found', 0),
+        'new_posts': data.get('new_posts', 0),
+        'projects_created': data.get('projects_created', 0),
+        'error_message': data.get('error_message'),
+        'error_details': data.get('error_details'),
+        'started_at': data.get('started_at', datetime.utcnow()),
+        'completed_at': data.get('completed_at'),
+        'duration_seconds': data.get('duration_seconds'),
+        'post_titles': data.get('post_titles', [])
+    }
+    
+    db.collection('crawl_logs').document(log_id).set(log_data)
+    logger.info(f"Crawl log created: {log_id}")
+    
+    return log_data
+
+
+def update_crawl_log(log_id: str, data: Dict) -> Dict:
+    """크롤링 로그 업데이트"""
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    db.collection('crawl_logs').document(log_id).update(data)
+    logger.info(f"Crawl log updated: {log_id}")
+    
+    doc = db.collection('crawl_logs').document(log_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def get_crawl_logs(site_id: Optional[str] = None, limit: int = 50) -> List[Dict]:
+    """
+    크롤링 로그 조회
+    
+    Args:
+        site_id: 사이트 ID (None이면 전체)
+        limit: 최대 조회 개수
+        
+    Returns:
+        로그 리스트
+    """
+    db = get_db()
+    if db is None:
+        return []
+    
+    query = db.collection('crawl_logs')
+    
+    if site_id:
+        query = query.where('site_id', '==', site_id)
+    
+    query = query.order_by('started_at', direction=firestore.Query.DESCENDING).limit(limit)
+    
+    logs = []
+    for doc in query.stream():
+        logs.append(doc.to_dict())
+    
+    return logs
+
+
+# Phase 2: Projects 확장 (목록 조회)
+
+def get_all_projects(limit: int = 100, status: Optional[str] = None) -> List[Dict]:
+    """
+    모든 프로젝트 조회
+    
+    Args:
+        limit: 최대 조회 개수
+        status: 상태 필터 (None이면 전체)
+        
+    Returns:
+        프로젝트 리스트
+    """
+    db = get_db()
+    if db is None:
+        return []
+    
+    query = db.collection('projects')
+    
+    if status:
+        query = query.where('status', '==', status)
+    
+    query = query.order_by('created_at', direction=firestore.Query.DESCENDING).limit(limit)
+    
+    projects = []
+    for doc in query.stream():
+        projects.append(doc.to_dict())
+    
+    return projects
+
+
+def delete_project(project_id: str):
+    """
+    프로젝트 삭제
+    
+    Args:
+        project_id: 프로젝트 ID
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    # 프로젝트 문서 삭제
+    db.collection('projects').document(project_id).delete()
+    
+    # 서브컬렉션 삭제 (sections, conversations)
+    # Note: Firestore는 문서 삭제 시 서브컬렉션을 자동 삭제하지 않음
+    # 필요 시 별도 삭제 로직 추가
+    
+    logger.info(f"Project deleted: {project_id}")
 
