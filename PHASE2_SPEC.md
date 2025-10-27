@@ -345,14 +345,14 @@ Phase 2에서는 시스템이 **등록된 사이트를 자동으로 모니터링
    - RSS: https://blogs.microsoft.com/feed/
    - 주기: 30분
 
-2. **Microsoft News Korea**
-   - URL: https://news.microsoft.com/source/asia/region/korea/?lang=ko
-   - RSS: 자동 감지
+2. **Microsoft News Source**
+   - URL: https://news.microsoft.com/source/
+   - RSS: https://news.microsoft.com/source/feed
    - 주기: 15분
 
 3. **Microsoft Security**
-   - URL: https://www.microsoft.com/en-us/security
-   - RSS: https://www.microsoft.com/en-us/security/rss
+   - URL: https://www.microsoft.com/en-us/security/blog/
+   - RSS: https://www.microsoft.com/en-us/security/blog/feed/
    - 주기: 15분
 
 ### 5.2 자동 크롤링 시스템
