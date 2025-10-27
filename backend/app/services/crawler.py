@@ -86,9 +86,27 @@ class SiteCrawler:
             
             logger.info(f"Found {len(new_posts)} new posts to process")
             
-            # TODO: Phase 2-3에서 자동 생성 파이프라인 연동
-            # 현재는 로그만 기록
-            projects_created = 0  # 임시
+            # 자동 생성 파이프라인 실행
+            projects_created = 0
+            if new_posts:
+                try:
+                    from app.services.pipeline_service import AutoGenerationPipeline
+                    
+                    # 파이프라인 실행 (최대 3개)
+                    pipeline = AutoGenerationPipeline(model='gpt-4.1-nano')
+                    result = pipeline.generate_multiple(
+                        posts=new_posts,
+                        site_id=site_id,
+                        site_name=site['name'],
+                        max_count=3  # 한 번에 최대 3개까지만 생성
+                    )
+                    
+                    projects_created = result['success']
+                    logger.info(f"Pipeline result: {projects_created}/{result['total']} projects created")
+                    
+                except Exception as e:
+                    logger.error(f"Pipeline execution failed: {str(e)}")
+                    # 파이프라인 실패해도 크롤링은 계속 진행
             
             # 게시물 제목 목록
             post_titles = [post['title'] for post in new_posts[:10]]  # 최대 10개
