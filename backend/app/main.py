@@ -41,6 +41,16 @@ app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(status.router, prefix="/api/status", tags=["status"])
 
+# Phase 2: Sites 라우터
+try:
+    from app.routers import sites
+    app.include_router(sites.router, tags=["sites"])
+    logger = logging.getLogger(__name__)
+    logger.info("Sites router registered")
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Sites router not available: {e}")
+
 
 @app.get("/")
 async def root():

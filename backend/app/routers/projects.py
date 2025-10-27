@@ -1,13 +1,13 @@
 """프로젝트 관련 API 라우터"""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from app.models.project import ProjectCreate, ProjectResponse, SummarizeRequest, SummarizeResponse
 from app.services.scraper import WebScraper
 from app.services.summarizer import AISummarizer
 from app.services.card_generator import CardNewsGenerator
 from app.utils import firebase
 from app.utils.memory_store import get_projects_store, get_sections_store
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 import logging
 import uuid
@@ -312,5 +312,162 @@ async def get_sections(project_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="섹션 조회 중 오류가 발생했습니다."
+        )
+
+
+# Phase 2: 추가 엔드포인트
+
+@router.get("", response_model=List[ProjectResponse])
+async def list_all_projects(
+    status_filter: Optional[str] = Query(None, description="상태 필터: draft, summarized, completed"),
+    limit: int = Query(100, ge=1, le=500, description="최대 조회 개수"),
+    source_type: Optional[str] = Query(None, description="소스 타입 필터: url, text, rss")
+):
+    """
+    모든 프로젝트 목록 조회 (Phase 2)
+    
+    - **status**: 상태 필터 (옵션)
+    - **limit**: 최대 조회 개수 (기본 100, 최대 500)
+    - **source_type**: 소스 타입 필터 (옵션)
+    
+    최근 생성순으로 정렬됨
+    """
+    try:
+        logger.info(f"Fetching all projects (status={status_filter}, limit={limit}, source_type={source_type})")
+        
+        # Firestore에서 프로젝트 목록 조회
+        try:
+            projects = firebase.get_all_projects(limit=limit, status=status_filter)
+        except:
+            # Firebase 실패 시 인메모리 사용
+            logger.info("Firebase failed, using memory store")
+            memory_projects = get_projects_store()
+            projects = list(memory_projects.values())
+            
+            # 상태 필터링
+            if status_filter:
+                projects = [p for p in projects if p.get('status') == status_filter]
+            
+            # 정렬 (최근 생성 순)
+            projects.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+            
+            # 제한
+            projects = projects[:limit]
+        
+        # source_type 필터링 (클라이언트 측)
+        if source_type:
+            projects = [p for p in projects if p.get('source_type') == source_type]
+        
+        logger.info(f"Found {len(projects)} projects")
+        return [ProjectResponse(**project) for project in projects]
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch projects: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch projects: {str(e)}"
+        )
+
+
+@router.put("/{project_id}/status", response_model=ProjectResponse)
+async def update_project_status(project_id: str, new_status: str):
+    """
+    프로젝트 상태 변경 (Phase 2)
+    
+    - **project_id**: 프로젝트 ID
+    - **new_status**: 새로운 상태 (draft, summarized, completed)
+    """
+    try:
+        logger.info(f"Updating project status: {project_id} -> {new_status}")
+        
+        # 프로젝트 존재 확인
+        try:
+            existing_project = firebase.get_project(project_id)
+        except:
+            memory_projects = get_projects_store()
+            existing_project = memory_projects.get(project_id)
+        
+        if not existing_project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}"
+            )
+        
+        # 상태 검증
+        valid_statuses = ['draft', 'summarized', 'completed']
+        if new_status not in valid_statuses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status: {new_status}. Must be one of: {', '.join(valid_statuses)}"
+            )
+        
+        # 상태 업데이트
+        try:
+            updated_project = firebase.update_project(project_id, {'status': new_status})
+        except:
+            memory_projects = get_projects_store()
+            memory_projects[project_id]['status'] = new_status
+            memory_projects[project_id]['updated_at'] = datetime.utcnow().isoformat()
+            updated_project = memory_projects[project_id]
+        
+        logger.info(f"Project status updated: {project_id}")
+        return ProjectResponse(**updated_project)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update project status {project_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update project status: {str(e)}"
+        )
+
+
+@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project_by_id(project_id: str):
+    """
+    프로젝트 삭제 (Phase 2)
+    
+    - **project_id**: 프로젝트 ID
+    
+    ⚠️ 주의: 프로젝트와 모든 연관된 데이터(섹션, 대화)가 삭제됩니다.
+    """
+    try:
+        logger.info(f"Deleting project: {project_id}")
+        
+        # 프로젝트 존재 확인
+        try:
+            existing_project = firebase.get_project(project_id)
+        except:
+            memory_projects = get_projects_store()
+            existing_project = memory_projects.get(project_id)
+        
+        if not existing_project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}"
+            )
+        
+        # 프로젝트 삭제
+        try:
+            firebase.delete_project(project_id)
+        except:
+            memory_projects = get_projects_store()
+            memory_sections = get_sections_store()
+            if project_id in memory_projects:
+                del memory_projects[project_id]
+            if project_id in memory_sections:
+                del memory_sections[project_id]
+        
+        logger.info(f"Project deleted successfully: {project_id}")
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete project {project_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete project: {str(e)}"
         )
 
