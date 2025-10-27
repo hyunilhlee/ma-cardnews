@@ -14,6 +14,8 @@ from app.utils.firebase import (
     delete_site
 )
 from app.services.rss_service import RSSService
+from app.services.scheduler_service import get_scheduler
+from app.services.crawler import crawl_site_job
 
 router = APIRouter(prefix="/api/sites", tags=["sites"])
 logger = logging.getLogger(__name__)
@@ -45,6 +47,21 @@ async def create_new_site(site: SiteCreate):
         # 사이트 생성
         site_data = site.model_dump()
         created_site = create_site(site_data)
+        
+        # 활성 상태면 스케줄러에 작업 등록
+        if site.status == 'active':
+            try:
+                scheduler = get_scheduler()
+                scheduler.add_site_job(
+                    site_id=created_site['id'],
+                    site_name=created_site['name'],
+                    rss_url=created_site['rss_url'],
+                    crawl_interval=created_site['crawl_interval'],
+                    crawl_func=crawl_site_job
+                )
+                logger.info(f"Scheduler job added for site: {created_site['id']}")
+            except Exception as e:
+                logger.warning(f"Failed to add scheduler job: {str(e)}")
         
         logger.info(f"Site created successfully: {created_site['id']}")
         return SiteResponse(**created_site)
@@ -141,6 +158,41 @@ async def update_site_by_id(site_id: str, site: SiteUpdate):
         update_data = site.model_dump(exclude_unset=True)
         updated_site = update_site(site_id, update_data)
         
+        # 스케줄러 작업 업데이트
+        try:
+            scheduler = get_scheduler()
+            
+            # 상태 변경 시
+            if site.status:
+                if site.status == 'active':
+                    # 활성화: 작업 추가 또는 재개
+                    scheduler.add_site_job(
+                        site_id=updated_site['id'],
+                        site_name=updated_site['name'],
+                        rss_url=updated_site['rss_url'],
+                        crawl_interval=updated_site['crawl_interval'],
+                        crawl_func=crawl_site_job
+                    )
+                    logger.info(f"Scheduler job activated for site: {site_id}")
+                else:
+                    # 비활성화 또는 에러: 작업 제거
+                    scheduler.remove_site_job(site_id)
+                    logger.info(f"Scheduler job removed for site: {site_id}")
+            
+            # 크롤링 주기 변경 시 (활성 상태인 경우만)
+            elif site.crawl_interval and updated_site.get('status') == 'active':
+                scheduler.update_site_job(
+                    site_id=updated_site['id'],
+                    site_name=updated_site['name'],
+                    rss_url=updated_site['rss_url'],
+                    crawl_interval=updated_site['crawl_interval'],
+                    crawl_func=crawl_site_job
+                )
+                logger.info(f"Scheduler job updated for site: {site_id}")
+                
+        except Exception as e:
+            logger.warning(f"Failed to update scheduler job: {str(e)}")
+        
         logger.info(f"Site updated successfully: {site_id}")
         return SiteResponse(**updated_site)
         
@@ -171,6 +223,14 @@ async def delete_site_by_id(site_id: str):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Site not found: {site_id}"
             )
+        
+        # 스케줄러 작업 제거
+        try:
+            scheduler = get_scheduler()
+            scheduler.remove_site_job(site_id)
+            logger.info(f"Scheduler job removed for site: {site_id}")
+        except Exception as e:
+            logger.warning(f"Failed to remove scheduler job: {str(e)}")
         
         # 사이트 삭제
         delete_site(site_id)
@@ -221,11 +281,11 @@ async def validate_rss(rss_url: str):
 @router.post("/{site_id}/trigger-crawl", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_manual_crawl(site_id: str):
     """
-    수동 크롤링 트리거 (개발용)
+    수동 크롤링 트리거
     
     - **site_id**: 사이트 ID
     
-    실제 크롤링 기능은 crawler.py에서 구현 예정
+    스케줄러를 통해 즉시 크롤링 실행
     """
     try:
         logger.info(f"Manual crawl triggered for site: {site_id}")
@@ -238,11 +298,32 @@ async def trigger_manual_crawl(site_id: str):
                 detail=f"Site not found: {site_id}"
             )
         
-        # TODO: 실제 크롤링 작업 큐에 추가
-        # 현재는 202 Accepted만 반환
+        # 스케줄러를 통해 즉시 실행
+        try:
+            scheduler = get_scheduler()
+            
+            # 작업이 등록되어 있으면 즉시 실행
+            job_info = scheduler.get_job_info(site_id)
+            if job_info:
+                scheduler.trigger_site_job_now(site_id)
+                logger.info(f"Existing job triggered for site: {site_id}")
+            else:
+                # 작업이 없으면 직접 실행 (비활성 사이트)
+                logger.info(f"No job found, running crawler directly for site: {site_id}")
+                result = crawl_site_job(site_id)
+                
+                if result['status'] == 'failed':
+                    logger.warning(f"Manual crawl failed: {result.get('error', 'Unknown')}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to trigger crawl: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to trigger crawl: {str(e)}"
+            )
         
         return {
-            "message": f"Crawl job queued for site: {site['name']}",
+            "message": f"Crawl job triggered for site: {site['name']}",
             "site_id": site_id
         }
         

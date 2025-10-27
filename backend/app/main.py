@@ -30,11 +30,53 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Firebase 초기화
+# Firebase & 스케줄러 초기화
 @app.on_event("startup")
 async def startup_event():
-    """앱 시작 시 Firebase 초기화"""
+    """앱 시작 시 Firebase 및 스케줄러 초기화"""
+    # Firebase 초기화
     firebase.initialize_firebase()
+    
+    # Phase 2: 스케줄러 초기화 및 활성 사이트 로드
+    try:
+        from app.services.scheduler_service import init_scheduler
+        from app.services.crawler import crawl_site_job
+        from app.utils.firebase import get_all_sites
+        
+        # 스케줄러 시작
+        scheduler = init_scheduler()
+        
+        # 활성 사이트 로드 및 작업 등록
+        sites = get_all_sites()
+        active_sites = [s for s in sites if s.get('status') == 'active']
+        
+        for site in active_sites:
+            scheduler.add_site_job(
+                site_id=site['id'],
+                site_name=site['name'],
+                rss_url=site['rss_url'],
+                crawl_interval=site['crawl_interval'],
+                crawl_func=crawl_site_job
+            )
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"Scheduler loaded {len(active_sites)} active sites")
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Scheduler initialization failed: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """앱 종료 시 스케줄러 종료"""
+    try:
+        from app.services.scheduler_service import shutdown_scheduler
+        shutdown_scheduler()
+        logger = logging.getLogger(__name__)
+        logger.info("Scheduler shutdown completed")
+    except:
+        pass
 
 # 라우터 등록
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
