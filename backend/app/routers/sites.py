@@ -11,7 +11,8 @@ from app.utils.firebase import (
     get_site,
     get_all_sites,
     update_site,
-    delete_site
+    delete_site,
+    get_crawl_logs
 )
 from app.services.rss_service import RSSService
 from app.services.scheduler_service import get_scheduler
@@ -334,5 +335,78 @@ async def trigger_manual_crawl(site_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to trigger crawl: {str(e)}"
+        )
+
+
+@router.get("/{site_id}/crawl-logs")
+async def get_site_crawl_logs(site_id: str, limit: int = 20):
+    """
+    특정 사이트의 크롤링 로그 조회
+    
+    - **site_id**: 사이트 ID
+    - **limit**: 조회할 로그 수 (기본: 20)
+    
+    최근 크롤링 이력과 발견된 게시물 정보 반환
+    """
+    try:
+        logger.info(f"Fetching crawl logs for site: {site_id}")
+        
+        # 사이트 존재 확인
+        site = get_site(site_id)
+        if not site:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Site not found: {site_id}"
+            )
+        
+        # 크롤링 로그 조회
+        logs = get_crawl_logs(site_id=site_id, limit=limit)
+        
+        logger.info(f"Found {len(logs)} crawl logs for site: {site_id}")
+        
+        return {
+            "site_id": site_id,
+            "site_name": site['name'],
+            "total_logs": len(logs),
+            "logs": logs
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch crawl logs for site {site_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch crawl logs: {str(e)}"
+        )
+
+
+@router.get("/crawl-logs/all")
+async def get_all_crawl_logs(limit: int = 50):
+    """
+    모든 사이트의 크롤링 로그 조회
+    
+    - **limit**: 조회할 로그 수 (기본: 50)
+    
+    전체 크롤링 이력 반환
+    """
+    try:
+        logger.info(f"Fetching all crawl logs (limit: {limit})")
+        
+        # 모든 크롤링 로그 조회
+        logs = get_crawl_logs(site_id=None, limit=limit)
+        
+        logger.info(f"Found {len(logs)} total crawl logs")
+        
+        return {
+            "total_logs": len(logs),
+            "logs": logs
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch all crawl logs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch crawl logs: {str(e)}"
         )
 

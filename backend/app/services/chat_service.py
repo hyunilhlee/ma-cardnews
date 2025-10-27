@@ -240,7 +240,7 @@ class ChatService:
             return {
                 'ai_response': f"✅ 모든 카드를 '{instruction}' 요청에 따라 수정했습니다.",
                 'updated_sections': updated_sections,
-                'action_taken': 'modify_all_content'
+                'action_taken': 'modify'
             }
         
         return {

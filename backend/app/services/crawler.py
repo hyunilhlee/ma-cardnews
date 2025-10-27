@@ -1,6 +1,6 @@
 """크롤러 - RSS 사이트 자동 크롤링 및 카드뉴스 생성"""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 import logging
 
@@ -37,7 +37,7 @@ class SiteCrawler:
                 'error': str (if failed)
             }
         """
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         log_id = None
         
         try:
@@ -77,8 +77,17 @@ class SiteCrawler:
             # 새 게시물 필터링 (마지막 크롤링 시간 이후)
             new_posts = []
             if last_crawled_at:
+                # last_crawled_at을 timezone-aware로 변환
+                if last_crawled_at.tzinfo is None:
+                    last_crawled_at = last_crawled_at.replace(tzinfo=timezone.utc)
+                
                 for post in posts:
-                    if post['published'] > last_crawled_at:
+                    post_published = post['published']
+                    # post published도 timezone-aware로 변환
+                    if post_published and post_published.tzinfo is None:
+                        post_published = post_published.replace(tzinfo=timezone.utc)
+                    
+                    if post_published and post_published > last_crawled_at:
                         new_posts.append(post)
             else:
                 # 첫 크롤링이면 최근 3개만 처리
@@ -112,7 +121,7 @@ class SiteCrawler:
             post_titles = [post['title'] for post in new_posts[:10]]  # 최대 10개
             
             # 크롤링 완료
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             # 크롤링 로그 업데이트 (완료)
@@ -128,7 +137,7 @@ class SiteCrawler:
             update_crawl_log(log_id, log_update)
             
             # 사이트 통계 업데이트
-            next_crawl_at = datetime.now() + timedelta(minutes=site['crawl_interval'])
+            next_crawl_at = datetime.now(timezone.utc) + timedelta(minutes=site['crawl_interval'])
             site_update = {
                 'last_crawled_at': end_time,
                 'next_crawl_at': next_crawl_at,
@@ -153,7 +162,7 @@ class SiteCrawler:
             
             # 크롤링 로그 업데이트 (실패)
             if log_id:
-                end_time = datetime.now()
+                end_time = datetime.now(timezone.utc)
                 duration = (end_time - start_time).total_seconds()
                 log_update = {
                     'status': 'failed',

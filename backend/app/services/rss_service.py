@@ -167,17 +167,27 @@ class RSSService:
         # 링크
         link = entry.get('link', '')
         
-        # 요약/내용
+        # 요약/내용 - content와 summary 모두 추출
         summary = ''
+        content = ''
+        
+        # 먼저 content 확인 (더 상세한 내용)
+        if 'content' in entry and entry.content:
+            content = entry.content[0].get('value', '')
+        
+        # summary 또는 description
         if 'summary' in entry:
             summary = entry.summary
         elif 'description' in entry:
             summary = entry.description
-        elif 'content' in entry and entry.content:
-            summary = entry.content[0].get('value', '')
         
-        # HTML 태그 제거 (간단한 처리)
+        # content가 없으면 summary를 content로 사용
+        if not content:
+            content = summary
+        
+        # HTML 태그 제거
         summary = self._strip_html_tags(summary)
+        content = self._strip_html_tags(content)
         
         # 발행일
         published = None
@@ -204,6 +214,7 @@ class RSSService:
             'title': title,
             'link': link,
             'summary': summary[:500],  # 500자로 제한
+            'content': content,  # 전체 내용 (제한 없음)
             'published': published,
             'author': author
         }

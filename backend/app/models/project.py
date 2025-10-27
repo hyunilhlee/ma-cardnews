@@ -43,6 +43,7 @@ class ProjectResponse(BaseModel):
     source_site_name: Optional[str] = None  # RSS 사이트 이름 (캐시)
     version: int = 1  # 버전 (수정 시 증가)
     is_auto_generated: bool = False  # 자동 생성 여부
+    last_error: Optional[str] = None  # 마지막 에러 메시지 (자동 생성 실패 시)
     
     class Config:
         from_attributes = True

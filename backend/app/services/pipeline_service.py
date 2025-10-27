@@ -53,33 +53,54 @@ class AutoGenerationPipeline:
             logger.info(f"Step 1/4: Scraping URL: {post['link']}")
             try:
                 scraped_data = self.scraper.scrape_url(post['link'])
-                content = scraped_data['content']
+                content = scraped_data.get('main_content', '') or scraped_data.get('content', '')
                 logger.info(f"Scraped {len(content)} characters")
+                
+                # 스크래핑 실패 시 RSS content 또는 summary 사용
+                if len(content.strip()) < 200:
+                    logger.warning(f"Scraped content too short, using RSS content/summary")
+                    content = post.get('content', '') or post.get('summary', '')
+                    
             except Exception as e:
-                logger.warning(f"Failed to scrape URL, using RSS summary: {str(e)}")
-                # 스크래핑 실패 시 RSS summary 사용
-                content = post['summary']
+                logger.warning(f"Failed to scrape URL, using RSS content/summary: {str(e)}")
+                # 스크래핑 실패 시 RSS content 또는 summary 사용
+                content = post.get('content', '') or post.get('summary', '')
             
-            # 내용이 너무 짧으면 건너뛰기
-            if len(content.strip()) < 200:
-                logger.warning(f"Content too short ({len(content)} chars), skipping")
+            # Step 2: 프로젝트 생성 (모든 피드 보존)
+            logger.info("Step 2/4: Creating project")
+            
+            # 내용 길이에 관계없이 프로젝트 생성 (최소 10자 이상만)
+            if len(content.strip()) < 10:
+                logger.warning(f"Content too short ({len(content)} chars), skipping completely")
                 return None
             
-            # Step 2: 프로젝트 생성 (초안)
-            logger.info("Step 2/4: Creating project")
             project_data = {
+                'title': post.get('title', 'Untitled'),
                 'source_type': 'rss',
-                'source_content': content,
+                'source_url': post.get('link', ''),
+                'source_text': content,
                 'source_site_id': site_id,
                 'source_site_name': site_name,
                 'model': self.model,
                 'card_start_type': 'title',
                 'is_auto_generated': True,
-                'version': 1
+                'status': 'draft',
+                'version': 1,
+                'original_published_at': post.get('published')
             }
             project = create_project(project_data)
             project_id = project['id']
             logger.info(f"Project created: {project_id}")
+            
+            # 내용이 너무 짧으면 요약/생성 스킵하고 draft로 유지
+            if len(content.strip()) < 200:
+                logger.warning(f"Content too short ({len(content)} chars), keeping as draft for manual review")
+                update_project(project_id, {
+                    'status': 'draft',
+                    'summary': f"⚠️ 내용이 짧아 자동 생성을 건너뛰었습니다. ({len(content)}자)\n\n수동으로 완성해주세요.",
+                    'last_error': f'Content too short: {len(content)} chars'
+                })
+                return project_id  # draft 상태로 유지
             
             # Step 3: AI 요약 생성
             logger.info("Step 3/4: Generating summary")
@@ -97,8 +118,14 @@ class AutoGenerationPipeline:
                 
             except Exception as e:
                 logger.error(f"Failed to generate summary: {str(e)}")
-                # 요약 실패 시 프로젝트 삭제
-                return None
+                # 요약 실패 시에도 프로젝트 유지 (draft 상태)
+                update_project(project_id, {
+                    'status': 'draft',
+                    'summary': f"⚠️ 요약 생성에 실패했습니다.\n\n오류: {str(e)}\n\n수동으로 완성해주세요.",
+                    'last_error': f'Summary generation failed: {str(e)}'
+                })
+                logger.warning(f"Summary failed, keeping project {project_id} as draft")
+                return project_id  # draft 상태로 유지
             
             # Step 4: 카드뉴스 생성
             logger.info("Step 4/4: Generating card news sections")
@@ -113,15 +140,24 @@ class AutoGenerationPipeline:
                 create_sections(project_id, sections)
                 
                 # 프로젝트 상태 업데이트 (완료)
-                update_project(project_id, {'status': 'completed'})
+                update_project(project_id, {
+                    'status': 'completed',
+                    'last_error': None  # 에러 초기화
+                })
                 
                 logger.info(f"✅ Auto-generation completed: {project_id} ({len(sections)} sections)")
                 return project_id
                 
             except Exception as e:
                 logger.error(f"Failed to generate sections: {str(e)}")
-                # 섹션 생성 실패 시에도 프로젝트는 유지 (요약 상태)
-                return project_id
+                # 섹션 생성 실패 시에도 프로젝트 유지 (summarized 상태)
+                # 요약까지는 성공했으므로 사용자가 수동으로 카드뉴스 생성 가능
+                update_project(project_id, {
+                    'status': 'summarized',
+                    'last_error': f'Card generation failed: {str(e)}'
+                })
+                logger.warning(f"Card generation failed, keeping project {project_id} as summarized (요약까지 완료)")
+                return project_id  # summarized 상태로 유지
             
         except Exception as e:
             logger.error(f"Pipeline failed for post {post['title']}: {str(e)}")

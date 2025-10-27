@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Firebase 초기화 상태
 _app_initialized = False
 _db = None
+_app = None
 
 
 def initialize_firebase():
@@ -20,27 +21,39 @@ def initialize_firebase():
     Firebase Admin SDK 초기화
     환경 변수에서 설정을 읽어옴
     """
-    global _app_initialized, _db
+    global _app_initialized, _db, _app
     
     if _app_initialized:
         return _db
     
     try:
+        # 기존 앱이 있으면 삭제
+        try:
+            if firebase_admin._apps:
+                for app in firebase_admin._apps.values():
+                    firebase_admin.delete_app(app)
+                logger.info("Deleted existing Firebase app instances")
+        except:
+            pass
+        
         # 서비스 계정 키 파일 경로
         cred_path = os.getenv('FIREBASE_CREDENTIALS_PATH', './serviceAccountKey.json')
+        project_id = os.getenv('FIREBASE_PROJECT_ID', 'ma-cardnews')
         
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-            logger.info("Firebase initialized with service account")
+            # Firebase 앱 초기화
+            _app = firebase_admin.initialize_app(cred)
+            logger.info(f"Firebase initialized with service account (project: {project_id})")
         else:
             # 서비스 계정 파일이 없으면 기본 초기화 (로컬 개발용)
             logger.warning(f"Service account key not found at {cred_path}, using default credentials")
-            firebase_admin.initialize_app()
+            _app = firebase_admin.initialize_app()
         
+        # Firestore 클라이언트 초기화
         _db = firestore.client()
         _app_initialized = True
-        logger.info("Firestore client initialized")
+        logger.info("Firestore client initialized successfully")
         return _db
         
     except Exception as e:
@@ -471,18 +484,34 @@ def get_crawl_logs(site_id: Optional[str] = None, limit: int = 50) -> List[Dict]
     if db is None:
         return []
     
-    query = db.collection('crawl_logs')
-    
-    if site_id:
-        query = query.where('site_id', '==', site_id)
-    
-    query = query.order_by('started_at', direction=firestore.Query.DESCENDING).limit(limit)
-    
-    logs = []
-    for doc in query.stream():
-        logs.append(doc.to_dict())
-    
-    return logs
+    try:
+        query = db.collection('crawl_logs')
+        
+        if site_id:
+            # 복합 인덱스가 필요하므로, 일단 모든 로그를 가져온 후 Python에서 필터링
+            # TODO: Firebase Console에서 복합 인덱스 생성 후 제거
+            all_logs = []
+            for doc in query.stream():
+                log_data = doc.to_dict()
+                if log_data.get('site_id') == site_id:
+                    all_logs.append(log_data)
+            
+            # Python에서 정렬
+            all_logs.sort(key=lambda x: x.get('started_at', datetime.min), reverse=True)
+            return all_logs[:limit]
+        else:
+            # site_id 필터 없이 order_by만 사용 (단일 필드 인덱스는 자동 생성)
+            query = query.order_by('started_at', direction=firestore.Query.DESCENDING).limit(limit)
+            
+            logs = []
+            for doc in query.stream():
+                logs.append(doc.to_dict())
+            
+            return logs
+            
+    except Exception as e:
+        logger.error(f"Failed to get crawl logs: {str(e)}")
+        return []
 
 
 # Phase 2: Projects 확장 (목록 조회)
