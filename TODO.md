@@ -65,17 +65,17 @@
 
 ---
 
-## 🚧 Phase 2 (Auto-Generation) - 진행 예정 🆕
+## 🚧 Phase 2 (RSS Auto-Generation) - 진행 예정 🆕
 
 ### 개요
-**사용자가 사이트를 등록하면 자동으로 새 게시물을 감지하고 카드뉴스를 생성하는 완전 자동화 시스템**
+**RSS 피드를 통해 자동으로 새 게시물을 감지하고 카드뉴스를 생성하는 자동화 시스템 (RSS 전용)**
 
 ### 핵심 목표
 - ✨ **100% 자동화**: 수동 입력 없이 자동으로 카드뉴스 생성
-- 🤖 **지능형 크롤링**: RSS 피드 및 크롤링봇으로 새 게시물 자동 감지
+- 📡 **RSS 전용**: RSS 피드가 있는 사이트만 지원 (빠른 개발)
 - 💾 **영구 저장**: 모든 프로젝트를 DB에 저장하고 관리
-- 📧 **알림 시스템**: 카드뉴스 생성 완료 시 이메일 알림
-- 🎯 **Microsoft 블로그 타겟**: 3개 Microsoft 사이트 자동 모니터링
+- 📧 **사용자별 알림**: 대시보드에서 이메일 등록/관리
+- 🎯 **RSS 지원 사이트**: Microsoft 블로그 등 RSS 피드 제공 사이트
 
 ### 1. 데이터베이스 및 저장소
 - [ ] **Firebase Firestore 스키마 설계**
@@ -93,40 +93,38 @@
 ### 2. 크롤링 사이트 관리
 - [ ] **사이트 등록 UI**
   - [ ] 크롤링 사이트 목록 페이지
-  - [ ] 사이트 추가 폼 (URL, 이름, 설명, 크롤링 주기)
+  - [ ] 사이트 추가 폼 (URL, RSS URL, 이름, 크롤링 주기)
+  - [ ] RSS 피드 유효성 자동 검증
   - [ ] 사이트 수정/삭제 기능
   - [ ] 사이트 활성화/비활성화 토글
 
-- [ ] **기본 등록 사이트 (Microsoft)**
-  - [ ] https://blogs.microsoft.com/
-  - [ ] https://news.microsoft.com/source/asia/region/korea/?lang=ko
-  - [ ] https://www.microsoft.com/en-us/security
+- [ ] **기본 등록 사이트 (RSS 지원)**
+  - [ ] https://blogs.microsoft.com/ (RSS: /feed/)
+  - [ ] https://www.microsoft.com/en-us/security (RSS 확인)
+  - [ ] 기타 RSS 지원 기술 블로그
 
 - [ ] **Backend API**
-  - [ ] `POST /api/sites` - 사이트 등록
+  - [ ] `POST /api/sites` - 사이트 등록 (RSS 필수)
   - [ ] `GET /api/sites` - 사이트 목록 조회
   - [ ] `PUT /api/sites/{site_id}` - 사이트 수정
   - [ ] `DELETE /api/sites/{site_id}` - 사이트 삭제
   - [ ] `GET /api/sites/{site_id}/status` - 크롤링 상태 확인
+  - [ ] `POST /api/sites/validate-rss` - RSS URL 유효성 검사
 
-### 3. 자동 크롤링 시스템
+### 3. RSS 기반 자동 크롤링 시스템
 - [ ] **RSS 피드 파서**
   - [ ] `feedparser` 라이브러리 통합
-  - [ ] RSS 피드 자동 감지
-  - [ ] 새 게시물 감지 로직
-  - [ ] 중복 게시물 필터링
+  - [ ] RSS 피드 유효성 검증
+  - [ ] 새 게시물 자동 감지
+  - [ ] 중복 게시물 필터링 (URL 기반)
+  - [ ] RSS 메타데이터 추출 (제목, 날짜, 요약)
 
-- [ ] **크롤링 봇**
-  - [ ] Selenium/Playwright 통합 (JavaScript 렌더링)
-  - [ ] 사이트별 커스텀 크롤링 로직
-  - [ ] 게시물 본문 추출
-  - [ ] 이미지 URL 추출 (Phase 3 대비)
-
-- [ ] **스케줄러 (Cron Job)**
+- [ ] **스케줄러 (APScheduler)**
   - [ ] APScheduler 통합
-  - [ ] 사이트별 크롤링 주기 설정 (5분/15분/30분/1시간)
-  - [ ] 크롤링 실패 시 재시도 로직
+  - [ ] 사이트별 크롤링 주기 설정 (15분/30분/1시간/3시간)
+  - [ ] RSS 파싱 실패 시 재시도 로직 (3회)
   - [ ] 크롤링 이력 로그 저장
+  - [ ] 스케줄러 상태 모니터링
 
 ### 4. 자동 카드뉴스 생성 파이프라인
 - [ ] **자동 생성 워크플로우**
@@ -141,19 +139,28 @@
   - [ ] `GET /api/pipeline/status/{job_id}` - 파이프라인 상태 확인
   - [ ] `GET /api/pipeline/history` - 파이프라인 실행 이력
 
-### 5. 이메일 알림 시스템
-- [ ] **이메일 서비스 통합**
+### 5. 사용자별 이메일 알림 시스템
+- [ ] **이메일 등록 및 관리 UI**
+  - [ ] 대시보드에 "알림 설정" 메뉴 추가
+  - [ ] 이메일 주소 등록/수정/삭제
+  - [ ] 여러 이메일 주소 등록 지원 (최대 5개)
+  - [ ] 알림 ON/OFF 개별 토글
+  - [ ] 알림 수신 테스트 기능
+
+- [ ] **이메일 서비스 통합 (SendGrid)**
   - [ ] SendGrid API 통합
   - [ ] 이메일 템플릿 작성 (HTML)
   - [ ] 알림 타입별 템플릿
-    - [ ] 카드뉴스 생성 완료
+    - [ ] 카드뉴스 생성 완료 (프로젝트 링크)
     - [ ] 크롤링 실패 알림
-    - [ ] 주간 요약 리포트
+    - [ ] 주간 요약 리포트 (선택사항)
 
-- [ ] **알림 설정**
-  - [ ] 사용자별 알림 설정 UI
-  - [ ] 알림 ON/OFF 토글
-  - [ ] 알림 수신 이메일 주소 설정
+- [ ] **Backend API**
+  - [ ] `POST /api/notifications/emails` - 이메일 주소 등록
+  - [ ] `GET /api/notifications/emails` - 등록된 이메일 목록
+  - [ ] `PUT /api/notifications/emails/{email_id}` - 이메일 수정
+  - [ ] `DELETE /api/notifications/emails/{email_id}` - 이메일 삭제
+  - [ ] `POST /api/notifications/test` - 테스트 이메일 발송
 
 ### 6. 프로젝트 관리 시스템
 - [ ] **프로젝트 목록 페이지**
@@ -186,11 +193,11 @@
   - [ ] 소프트 삭제 (archived 상태)
   - [ ] 영구 삭제 옵션
 
-### 7. 메인 대시보드 (3개 메뉴)
+### 7. 메인 대시보드 (4개 메뉴)
 - [ ] **1️⃣ 크롤링 사이트 설정**
-  - [ ] 등록된 사이트 목록
+  - [ ] 등록된 RSS 사이트 목록
   - [ ] 사이트별 크롤링 상태 (마지막 크롤링 시간, 다음 예정 시간)
-  - [ ] 새 사이트 추가 버튼
+  - [ ] 새 RSS 사이트 추가 버튼
   - [ ] 사이트별 빠른 수동 크롤링 버튼
 
 - [ ] **2️⃣ 수동 카드뉴스 생성 (Phase 1 기능)**
@@ -204,54 +211,75 @@
   - [ ] 최근 프로젝트 우선 표시
   - [ ] "새로 생성됨" 뱃지
 
+- [ ] **4️⃣ 알림 설정** 🆕
+  - [ ] 이메일 주소 관리
+  - [ ] 알림 ON/OFF 설정
+  - [ ] 테스트 이메일 발송
+
 ### 8. Backend 추가 개발
 - [ ] **Pydantic 모델 확장**
-  - [ ] `Site` 모델 (크롤링 사이트)
+  - [ ] `Site` 모델 (RSS 사이트)
   - [ ] `CrawlLog` 모델 (크롤링 이력)
-  - [ ] `Notification` 모델 (알림)
+  - [ ] `EmailRecipient` 모델 (알림 이메일) 🆕
+  - [ ] `Notification` 모델 (알림 이력)
   - [ ] `Project` 모델 확장 (버전, 상태, 메타데이터)
 
 - [ ] **새 서비스 구현**
-  - [ ] `crawler_service.py` - 크롤링 로직
-  - [ ] `rss_service.py` - RSS 피드 파싱
+  - [ ] `rss_service.py` - RSS 피드 파싱 (핵심)
   - [ ] `scheduler_service.py` - 스케줄링
   - [ ] `email_service.py` - 이메일 발송
   - [ ] `pipeline_service.py` - 자동 생성 파이프라인
 
 - [ ] **새 라우터 추가**
-  - [ ] `sites.py` - 사이트 관리 API
+  - [ ] `sites.py` - RSS 사이트 관리 API
   - [ ] `pipeline.py` - 파이프라인 API
-  - [ ] `notifications.py` - 알림 API
+  - [ ] `notifications.py` - 알림 및 이메일 관리 API 🆕
 
 ### 9. 외부 라이브러리 추가
 - [ ] **Python (Backend)**
-  - [ ] `feedparser` - RSS 파싱
-  - [ ] `APScheduler` - 스케줄링
-  - [ ] `sendgrid` - 이메일 발송
-  - [ ] `playwright` - JavaScript 렌더링 크롤링
-  - [ ] `selenium` - 대체 크롤링 옵션
+  - [ ] `feedparser==6.0.10` - RSS 파싱 (핵심)
+  - [ ] `APScheduler==3.10.4` - 스케줄링
+  - [ ] `sendgrid==6.11.0` - 이메일 발송
+  - [ ] `tenacity==8.2.3` - 재시도 로직
 
 - [ ] **Frontend**
-  - [ ] 추가 라이브러리 필요시 검토
+  - [ ] `react-table` - 프로젝트/이메일 목록 테이블 (선택)
+  - [ ] `date-fns` - 날짜 포맷팅 (선택)
 
 ### 10. 배포 및 인프라
 - [ ] **환경 변수 추가**
   - [ ] `SENDGRID_API_KEY`
-  - [ ] `ADMIN_EMAIL`
-  - [ ] `CRAWL_INTERVAL` (기본 크롤링 주기)
-  - [ ] `MAX_CONCURRENT_CRAWLS`
+  - [ ] `DEFAULT_CRAWL_INTERVAL` (기본 크롤링 주기, 예: 30)
+  - [ ] `MAX_CONCURRENT_CRAWLS` (기본: 3)
+  - [ ] `MAX_EMAIL_RECIPIENTS` (기본: 5)
 
 - [ ] **Render 설정 업데이트**
-  - [ ] Cron Job 또는 Background Worker 설정
-  - [ ] 메모리 증가 (크롤링 부하)
+  - [ ] Background Worker 추가 (스케줄러 실행)
+  - [ ] 메모리: 512MB → 1GB (권장)
 
 ---
 
-## 🎨 Phase 3 (Design & Export) - 미래 계획
+## 🎨 Phase 3 (Web Scraping & Design) - 미래 계획
 
-### 계획된 기능 (기존 Phase 2에서 이동)
+### 계획된 기능
 
-#### 1. 디자인 시스템
+#### 1. 웹 스크래핑 시스템 (RSS 없는 사이트) 🆕
+- [ ] **Playwright 통합**
+  - [ ] Playwright 설치 및 설정
+  - [ ] JavaScript 렌더링 지원
+  - [ ] 헤드리스 브라우저 모드
+- [ ] **사이트별 커스텀 크롤링**
+  - [ ] 사이트 구조 분석 툴
+  - [ ] CSS 셀렉터 설정 UI
+  - [ ] 커스텀 스크래핑 로직 저장
+- [ ] **RSS 없는 사이트 지원**
+  - [ ] Microsoft News Korea (RSS 없을 경우)
+  - [ ] 기타 RSS 미지원 사이트
+- [ ] **크롤링 타입 선택**
+  - [ ] 사이트 등록 시 "RSS" 또는 "웹 스크래핑" 선택
+  - [ ] 자동 감지 및 추천
+
+#### 2. 디자인 시스템
 - [ ] 디자인 템플릿 라이브러리
   - [ ] 10+ 프리셋 템플릿
   - [ ] 색상 팔레트 선택
@@ -310,11 +338,11 @@
 - **핵심 기능**: 8/8 완료
 - **배포**: 2/2 완료 (Vercel + Render)
 
-### Phase 2 계획
-- **예상 기간**: 4-6주
-- **핵심 기능**: 10개 영역
-- **신규 API**: 15+ 엔드포인트
-- **타겟 사이트**: 3개 (Microsoft 블로그)
+### Phase 2 계획 (RSS 전용)
+- **예상 기간**: 3-4주 (1-2주 단축!) 🎯
+- **핵심 기능**: RSS 크롤링, 자동 생성, 사용자별 이메일
+- **신규 API**: 12+ 엔드포인트
+- **타겟 사이트**: RSS 지원 사이트 (Microsoft 블로그 등)
 
 ### 코드 통계
 - **Backend**: Python, FastAPI, 12개 파일
@@ -323,40 +351,67 @@
 
 ---
 
-## 🎯 Phase 2 개발 우선순위
+## 🎯 Phase 2 개발 우선순위 (3-4주)
 
-### Week 1-2: 기반 구축
-1. Firebase Firestore 스키마 설계 및 구축
-2. 프로젝트 저장 기능 구현
+### Week 1: 기반 구축 (7일)
+1. Firebase Firestore 스키마 설계 및 구축 (4개 컬렉션)
+2. 프로젝트 저장 기능 구현 (CRUD API)
 3. 크롤링 사이트 관리 UI 및 API
+4. 이메일 등록 UI 및 API 🆕
 
-### Week 3-4: 크롤링 시스템
-1. RSS 피드 파서 구현
-2. 크롤링 봇 구현 (Playwright)
-3. 스케줄러 설정 (APScheduler)
-4. Microsoft 사이트 3개 크롤링 테스트
+**체크포인트**:
+- [ ] Firestore 스키마 완성
+- [ ] 프로젝트 CRUD 동작
+- [ ] 사이트 등록 UI 완성
+- [ ] 이메일 등록 UI 완성
 
-### Week 5-6: 자동화 파이프라인
+### Week 2: RSS 크롤링 시스템 (7일)
+1. RSS 피드 파서 구현 (`feedparser`)
+2. RSS 유효성 검증 로직
+3. APScheduler 통합 및 설정
+4. Microsoft RSS 사이트 크롤링 테스트
+
+**체크포인트**:
+- [ ] RSS 파싱 성공
+- [ ] 스케줄러 자동 실행 (30분마다)
+- [ ] Microsoft 블로그 크롤링 성공
+- [ ] 중복 필터링 동작
+
+### Week 3: 자동화 파이프라인 & 알림 (7일)
 1. 자동 생성 파이프라인 구현
-2. 이메일 알림 시스템 (SendGrid)
-3. 프로젝트 관리 시스템 (목록/상세/수정)
-4. 메인 대시보드 UI (3개 메뉴)
+2. SendGrid 이메일 통합
+3. 사용자별 이메일 발송 로직
+4. 프로젝트 관리 시스템 (목록/상세/수정)
 
-### Week 7: 테스트 및 배포
-1. 통합 테스트
-2. 성능 최적화
-3. 프로덕션 배포
+**체크포인트**:
+- [ ] End-to-End 자동 생성 동작
+- [ ] 이메일 발송 성공
+- [ ] 프로젝트 목록 조회 가능
+- [ ] 프로젝트 수정 가능
+
+### Week 4: UI 통합 & 테스트 (7일)
+1. 메인 대시보드 UI (4개 메뉴)
+2. 통합 테스트
+3. 버그 수정 및 안정화
+4. 프로덕션 배포
+
+**체크포인트**:
+- [ ] 모든 메뉴 정상 동작
+- [ ] RSS 크롤링 성공률 95% 이상
+- [ ] 평균 생성 시간 30초 이내
+- [ ] 프로덕션 배포 완료
 4. 문서화 완료
 
 ---
 
 ## 📝 최근 업데이트
 
-### 2025-10-25
-- ✅ Phase 구조 재정의
-- ✅ Phase 2를 "Auto-Generation"으로 변경
-- ✅ Phase 3로 기존 Phase 2 기능 이동
-- ✅ Microsoft 블로그 크롤링 계획 수립
+### 2025-10-26
+- ✅ Phase 2 단순화: RSS 전용으로 변경 (개발 기간 단축)
+- ✅ Phase 3에 웹 스크래핑 (Playwright) 기능 이동
+- ✅ 이메일 알림을 사용자 등록 방식으로 변경
+- ✅ 메인 대시보드 4개 메뉴로 확장 (알림 설정 추가)
+- ✅ 개발 기간: 4-6주 → 3-4주 단축
 
 ---
 
