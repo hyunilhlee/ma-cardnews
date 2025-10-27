@@ -1,10 +1,11 @@
-# Phase 2 개발 정의서 - RSS 기반 자동화 시스템
+# Phase 2 개발 정의서 - RSS 핵심 기능만
 
-**CardNews AI Generator - RSS Auto-Generation Phase**
+**CardNews AI Generator - RSS Core Features Phase**
 
-**작성일**: 2025-10-26 (업데이트)  
-**예상 개발 기간**: 3-4주 ⚡ (1-2주 단축!)  
-**개발 우선순위**: High
+**작성일**: 2025-10-26 (업데이트 2)  
+**예상 개발 기간**: 2-3주 ⚡⚡ (핵심 기능만!)  
+**개발 우선순위**: High  
+**범위**: RSS 크롤링 → 카드뉴스 생성 → DB 저장 (인증/알림 제외)
 
 ---
 
@@ -1386,14 +1387,15 @@ def test_send_notification():
 
 | 항목 | 내용 |
 |------|------|
-| **목표** | RSS 기반 자동화 카드뉴스 생성 시스템 |
+| **목표** | RSS 크롤링 및 카드뉴스 자동 생성 (핵심만) |
 | **타겟 사이트** | RSS 지원 사이트 (Microsoft 블로그 등) |
-| **핵심 기능** | RSS 크롤링 → 자동 생성 → 저장 → 이메일 알림 |
-| **기술 스택** | RSS Parser (feedparser), APScheduler, SendGrid |
-| **개발 기간** | **3-4주** (21-28일) ⚡ 단축! |
-| **주요 API** | 12+ 엔드포인트 |
-| **데이터베이스** | Firestore 5개 컬렉션 (email_recipients 추가) |
-| **메뉴 구성** | 4개 (RSS 설정 / Phase 1 / 프로젝트 / 알림) |
+| **핵심 기능** | RSS 크롤링 → 자동 생성 → DB 저장 |
+| **기술 스택** | RSS Parser (feedparser), APScheduler |
+| **개발 기간** | **2-3주** (14-21일) ⚡⚡ 최대 단축! |
+| **주요 API** | 8-10 엔드포인트 |
+| **데이터베이스** | Firestore 3개 컬렉션 (sites, projects, crawl_logs) |
+| **메뉴 구성** | 3개 (RSS 설정 / Phase 1 / 프로젝트) |
+| **제외** | 이메일 알림, 사용자 인증 (Phase 3로 이동) |
 
 ### 성공 기준
 
@@ -1412,5 +1414,5 @@ def test_send_notification():
 
 ---
 
-**Last Updated**: 2025-10-26 (RSS 전용으로 단순화)
+**Last Updated**: 2025-10-26 (핵심 기능만 집중 - 인증/알림 제외)
 
