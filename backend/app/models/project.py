@@ -28,7 +28,7 @@ class ProjectResponse(BaseModel):
     """프로젝트 응답"""
     id: str
     source_type: str
-    source_content: str
+    source_content: Optional[str] = ""  # Phase 2: RSS 자동 생성 시 None 가능
     summary: Optional[str] = None
     keywords: Optional[List[str]] = None
     recommended_card_count: Optional[int] = None
