@@ -117,21 +117,31 @@ export function FeedCard({ item, onCreateCardnews }: FeedCardProps) {
         {item.summary || '요약이 없습니다.'}
       </p>
 
+      {/* 카드뉴스 생성 상태 표시 */}
+      {item.has_cardnews && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-green-800 bg-green-100 rounded-full">
+            ✅ 카드뉴스 생성됨
+          </span>
+        </div>
+      )}
+
       {/* 액션 버튼 */}
       <div className="flex gap-3 flex-wrap">
         {!item.has_cardnews ? (
           <button
             onClick={() => onCreateCardnews(item)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-sm hover:shadow-md"
           >
             🎨 카드뉴스 생성
           </button>
         ) : (
           <Link
             href={`/edit/${item.project_id}`}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium inline-block"
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm hover:shadow-md inline-flex items-center gap-2"
           >
-            ✏️ 편집하기
+            <span>📰</span>
+            <span>카드뉴스 보기</span>
           </Link>
         )}
         
@@ -139,7 +149,7 @@ export function FeedCard({ item, onCreateCardnews }: FeedCardProps) {
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
         >
           🔗 원본 보기
         </a>

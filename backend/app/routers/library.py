@@ -132,8 +132,15 @@ async def create_cardnews_from_feed(request: CreateCardnewsRequest):
                 detail="Failed to generate cardnews"
             )
         
+        # RSS 게시물 업데이트 (has_cardnews, project_id)
+        from app.utils.firebase import update_rss_post, get_project
+        update_rss_post(request.rss_post_id, {
+            'has_cardnews': True,
+            'project_id': project_id
+        })
+        logger.info(f"RSS post updated: {request.rss_post_id} -> project {project_id}")
+        
         # 프로젝트 상태 조회
-        from app.utils.firebase import get_project
         project = get_project(project_id)
         
         return CreateCardnewsResponse(
