@@ -284,9 +284,12 @@ export default function ProjectPage() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">🎨 카드뉴스</h2>
                 <div className="flex gap-3">
-                  {/* 프로젝트 목록으로 이동 */}
+                  {/* 목록으로 이동: RSS는 Library로, 일반 프로젝트는 Projects로 */}
                   <Button
-                    onClick={() => router.push('/projects')}
+                    onClick={() => {
+                      const isRSS = currentProject?.source_type === 'rss';
+                      router.push(isRSS ? '/library' : '/projects');
+                    }}
                     variant="outline"
                   >
                     📋 목록으로
