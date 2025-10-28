@@ -8,6 +8,7 @@
   - [x] 다중 URL 입력 (줄바꿈 구분)
   - [x] 텍스트 직접 입력
   - [x] 입력 가시성 개선 (text-gray-900)
+  - [x] URL 입력을 기본 옵션으로 설정
 
 - [x] **AI 처리**
   - [x] OpenAI API 통합
@@ -20,13 +21,14 @@
   - [x] 키워드 자동 추출
   - [x] 추천 카드 수 계산
   - [x] 다국어 지원 (영어/한국어/일본어)
+  - [x] 3단계 언어 감지 폴백 (auto → ko → en)
 
 - [x] **카드뉴스 생성**
   - [x] AI 기반 자동 생성
   - [x] JSON 형식 구조화
   - [x] 카드 시작 옵션 (제목/내용 선택)
   - [x] 타입별 카드 (title, content, closing)
-  - [x] 다국어 콘텐츠 생성
+  - [x] **모든 카드뉴스 한글 생성** (영문 원본도 한글로 번역) ⭐
 
 - [x] **AI 채팅 편집**
   - [x] Function Calling 구현
@@ -37,6 +39,7 @@
     - [x] 길이 조절 (간결하게/상세하게)
     - [x] 스타일 변경 (스토리텔링/질문형식/리스트)
     - [x] 이모지 추가 등 자유로운 수정
+  - [x] **Undo 기능** - 이전 상태로 복원 ⭐
 
 - [x] **UI/UX**
   - [x] Next.js 14 (App Router)
@@ -46,16 +49,18 @@
   - [x] OpenAI 연결 상태 표시
   - [x] AI 모델 카드 선택 UI
   - [x] 반응형 디자인
+  - [x] 채팅 입력 텍스트 검은색 표시
 
 - [x] **Backend**
   - [x] FastAPI 구조
   - [x] Pydantic 모델
   - [x] Web Scraping (newspaper3k, BeautifulSoup)
   - [x] 다중 URL 스크래핑
-  - [x] 언어 자동 감지
+  - [x] 언어 자동 감지 (3단계 폴백)
   - [x] CORS 설정 (Vercel 와일드카드)
   - [x] Firebase Firestore 통합
   - [x] 인메모리 fallback
+  - [x] 짧은 콘텐츠 에러 처리 (명확한 메시지)
 
 - [x] **배포**
   - [x] Frontend → Vercel
@@ -77,7 +82,7 @@
 - ✅ Firebase Firestore 영구 저장
 - ✅ 프로덕션 배포 완료 (Render + Vercel)
 
-### 최근 업데이트 (2025-10-28)
+### 주요 업데이트
 
 #### 1. RSS 피드 100% 보존 로직 ✅
 - 모든 RSS 피드를 프로젝트로 생성 (최소 10자 이상)
@@ -105,23 +110,14 @@
 - **Frontend**: Vercel (https://frontend-pied-delta-74.vercel.app)
 - GitHub 연동으로 자동 배포
 
-### 개요
-**RSS 피드를 통해 자동으로 새 게시물을 감지하고 카드뉴스를 생성하는 자동화 시스템**
-
-### 핵심 목표 (모두 달성!)
-- ✅ **100% 자동화**: 수동 입력 없이 자동으로 카드뉴스 생성
-- ✅ **RSS 전용**: RSS 피드가 있는 사이트만 지원 (빠른 개발)
-- ✅ **영구 저장**: 모든 프로젝트를 DB에 저장하고 관리
-- ✅ **핵심 플로우**: RSS 크롤링 → 카드뉴스 생성 → DB 저장
-- ✅ **빠른 개발**: 2-3주 목표 달성!
-
 ### 완료된 기능
 
 #### 1. 데이터베이스 및 저장소 ✅
-- [x] **Firebase Firestore 스키마 설계** (3개 컬렉션)
+- [x] **Firebase Firestore 스키마 설계** (4개 컬렉션)
   - [x] `sites` 컬렉션 (크롤링 사이트 관리)
   - [x] `projects` 컬렉션 (생성된 카드뉴스 프로젝트)
   - [x] `crawl_logs` 컬렉션 (크롤링 이력)
+  - [x] `rss_posts` 컬렉션 (RSS 게시물 저장) ⭐
 
 - [x] **프로젝트 저장 기능**
   - [x] 프로젝트 생성 및 자동 저장
@@ -133,9 +129,8 @@
 #### 2. 크롤링 사이트 관리 ✅
 - [x] **사이트 등록 UI**
   - [x] 크롤링 사이트 목록 페이지
-  - [x] 사이트 추가 폼 (URL, RSS URL, 이름, 크롤링 주기)
+  - [x] 사이트 추가/삭제 기능
   - [x] RSS 피드 유효성 자동 검증
-  - [x] 사이트 수정/삭제 기능
   - [x] 사이트 활성화/비활성화 토글
   - [x] 통계 표시 (크롤링 횟수, 새 글 발견, 카드뉴스)
 
@@ -187,26 +182,29 @@
 - [x] **프로젝트 목록 페이지**
   - [x] 저장된 프로젝트 전체 목록
   - [x] 필터링 (상태별: draft/summarized/completed)
-  - [x] 클릭하여 상세 페이지 이동
+  - [x] 전체 행 클릭하여 편집 페이지 이동
   - [x] 상태 뱃지 표시
   - [x] 프로젝트 삭제 기능
+  - [x] 키워드 표시
 
-- [x] **프로젝트 상세 페이지**
+- [x] **프로젝트 편집 페이지**
   - [x] 프로젝트 정보 (제목, 소스 URL, 생성일, 상태)
   - [x] 카드뉴스 미리보기
   - [x] 키워드 표시
+  - [x] **목록으로 버튼 동적 이동** (RSS → Library, 일반 → Projects) ⭐
 
 - [x] **프로젝트 수정 기능**
   - [x] AI 채팅으로 카드 수정
   - [x] 특정 카드 수정
   - [x] 전체 수정 (자연어)
   - [x] 수정 후 저장 (버전 증가)
+  - [x] **Undo 기능** - 이전 상태로 복원 ⭐
 
-#### 6. 메인 대시보드 (3개 메뉴) ✅
+#### 6. 메인 대시보드 (4개 메뉴) ✅
 - [x] **1️⃣ RSS 사이트 설정** (`/sites`)
   - [x] 등록된 RSS 사이트 목록
   - [x] 사이트별 크롤링 통계
-  - [x] 새 RSS 사이트 추가 버튼
+  - [x] 새 RSS 사이트 추가/삭제
   - [x] 수동 크롤링 버튼
   - [x] 크롤링 로그 조회 모달
 
@@ -220,53 +218,136 @@
   - [x] 상태별 필터링
   - [x] 프로젝트 클릭하여 편집
 
-#### 7. Backend 개발 완료 ✅
-- [x] **Pydantic 모델 확장**
-  - [x] `Site` 모델 (RSS 사이트)
-  - [x] `CrawlLog` 모델 (크롤링 이력)
-  - [x] `Project` 모델 확장 (버전, 상태, 메타데이터)
+- [x] **4️⃣ RSS Library** (`/library`) ⭐ Phase 2.5
+  - [x] 모든 RSS 게시물 통합 조회
+  - [x] 월별 필터링 (2025년 9월부터)
+  - [x] 사이트별 필터링
+  - [x] 키워드 검색
+  - [x] 카드 형태 표시
 
-- [x] **새 서비스 구현**
-  - [x] `rss_service.py` - RSS 피드 파싱
-  - [x] `scheduler_service.py` - 스케줄링
-  - [x] `pipeline_service.py` - 자동 생성 파이프라인
-  - [x] `crawler.py` - 크롤링 작업 실행
+---
 
-- [x] **새 라우터 추가**
-  - [x] `sites.py` - RSS 사이트 관리 API
+## 🎨 Phase 2.5 (RSS Library & Optimization) - 완료! ✅
 
-#### 8. 외부 라이브러리 추가 ✅
-- [x] **Python (Backend)**
-  - [x] `feedparser==6.0.11` - RSS 파싱
-  - [x] `APScheduler==3.10.4` - 스케줄링
-  - [x] `tenacity==8.5.0` - 재시도 로직
+### 📅 완료일: 2025-10-28
 
-#### 9. 배포 및 인프라 ✅
-- [x] **환경 변수 설정**
-  - [x] `DEFAULT_CRAWL_INTERVAL` (기본 30분)
-  - [x] `MAX_CONCURRENT_CRAWLS` (기본 3)
-  - [x] `FIREBASE_PROJECT_ID`
-  - [x] `FIREBASE_CREDENTIALS_PATH`
+### 🚀 주요 성과
 
-- [x] **Render 배포**
-  - [x] Docker 이미지 빌드
-  - [x] Secret Files (serviceAccountKey.json)
-  - [x] Environment Variables 설정
-  - [x] 자동 배포 (GitHub 연동)
+**RSS Library 및 사용자 경험 대폭 개선!**
+- ✅ RSS Library 통합 피드 구축
+- ✅ 자동 AI 처리 (한글 번역, 요약, 키워드)
+- ✅ 카드뉴스 생성 UX 개선 (로딩 페이지)
+- ✅ Undo 기능 추가
+- ✅ 모든 카드뉴스 한글 생성
 
-- [x] **Vercel 배포**
-  - [x] Root Directory 설정 (frontend)
-  - [x] Environment Variables (NEXT_PUBLIC_API_URL)
-  - [x] 자동 배포 (GitHub 연동)
+### 완료된 기능
 
-### 🎯 Phase 2 개발 통계
+#### 1. RSS Library (통합 피드) ✅
+- [x] **RSS Posts 영구 저장**
+  - [x] `rss_posts` 컬렉션 생성
+  - [x] 모든 RSS 게시물 DB 저장 (30일 이후도 유지)
+  - [x] 자동 AI 요약 (8-12문장, 한글)
+  - [x] 자동 키워드 추출 (최대 5개, 한글)
+  - [x] 제목 한글 번역 (원문 영어 시)
+  - [x] 원본 제목 저장 (`title_original`)
+
+- [x] **Library 페이지** (`/library`)
+  - [x] 모든 RSS 게시물 최신순 표시
+  - [x] 월별 필터링 (2025년 9월부터)
+  - [x] 사이트별 필터링
+  - [x] 키워드 검색
+  - [x] 무한 스크롤 (페이지네이션)
+
+- [x] **Library 카드 UI**
+  - [x] 한글 제목 + 원문 제목 (영어) 함께 표시
+  - [x] 키워드 태그 표시
+  - [x] 실제 날짜/시간 표시 (yyyy년 M월 d일 HH:mm)
+  - [x] AI 요약문 표시 (한글, 8-12문장)
+  - [x] 카드뉴스 생성 상태 표시 ("✅ 카드뉴스 생성됨")
+  - [x] 생성된 카드뉴스는 바로 편집 페이지로 이동
+
+#### 2. 자동 AI 처리 파이프라인 ✅
+- [x] **RSS 크롤링 시 자동 처리**
+  - [x] 콘텐츠 부족 시 자동 스크래핑
+  - [x] AI 요약 생성 (8-12문장, 한글)
+  - [x] 키워드 추출 (최대 5개, 한글)
+  - [x] 제목 한글 번역 (OpenAI Translation)
+  - [x] 모든 데이터 DB 저장
+
+- [x] **기존 RSS 게시물 마이그레이션**
+  - [x] `migrate_rss_posts.py` 스크립트 작성
+  - [x] 모든 기존 게시물 AI 처리
+  - [x] 한글 번역 및 요약 적용
+  - [x] 키워드 추출
+  - [x] DB 업데이트
+
+#### 3. 카드뉴스 생성 UX 개선 ✅
+- [x] **로딩 페이지** (`/generating`)
+  - [x] 스피닝 애니메이션
+  - [x] 진행 단계 표시 (콘텐츠 분석, AI 요약, 디자인)
+  - [x] 자동 리다이렉트 (성공 → 편집, 실패 → Library)
+
+- [x] **직접 생성 플로우**
+  - [x] Library에서 "카드뉴스 생성" 클릭 → 바로 생성
+  - [x] 요약 페이지 건너뛰기 (RSS는 이미 요약됨)
+  - [x] 생성 완료 후 편집 페이지로 이동
+
+- [x] **카드뉴스 상태 관리**
+  - [x] RSS Post에 `has_cardnews` 플래그 추가
+  - [x] `project_id` 연결
+  - [x] 중복 생성 방지
+
+#### 4. 편집 기능 개선 ✅
+- [x] **Undo 기능**
+  - [x] AI 수정 전 백업 저장
+  - [x] "↩️ 이전 상태로 복원하기" 버튼
+  - [x] 섹션 전체 복원
+
+- [x] **목록 버튼 동적 이동**
+  - [x] RSS 프로젝트 → Library로 이동
+  - [x] 일반 프로젝트 → Projects로 이동
+  - [x] `source_type` 기반 자동 판단
+
+#### 5. 한글 생성 강화 ✅
+- [x] **모든 카드뉴스 한글로 생성**
+  - [x] 프롬프트 강화 (한글 우선 지시)
+  - [x] 시스템 메시지 강화 (Korean expert)
+  - [x] 영문 원본도 한글로 자동 번역
+  - [x] 일관된 한글 출력 보장
+
+- [x] **에러 처리 개선**
+  - [x] `recommended_card_count` None 처리
+  - [x] 짧은 콘텐츠 명확한 에러 메시지
+  - [x] 500 에러 방지
+
+#### 6. Backend API 추가 ✅
+- [x] **Library API**
+  - [x] `GET /api/library/feed` - RSS 통합 피드
+  - [x] `POST /api/library/create-cardnews` - Library에서 카드뉴스 생성
+  - [x] 월별 필터링 지원
+  - [x] 사이트별 필터링 지원
+  - [x] 페이지네이션 (limit/offset)
+
+- [x] **RSS Post 관리**
+  - [x] `create_rss_post` - RSS 게시물 생성/업데이트
+  - [x] `get_rss_post_by_guid` - GUID로 조회
+  - [x] `title_original`, `keywords` 필드 추가
+
+#### 7. 외부 라이브러리 추가 ✅
+- [x] **Frontend**
+  - [x] `date-fns` - 날짜 포맷팅
+  - [x] `axios` - HTTP 클라이언트
+
+---
+
+## 🎯 Phase 2.5 개발 통계
 
 - **전체 진행률**: 100% ✅
-- **개발 기간**: 2025-10-25 ~ 2025-10-28 (약 3일!)
-- **신규 API**: 10개 엔드포인트
-- **컬렉션**: 3개 (sites, projects, crawl_logs)
-- **등록 사이트**: Microsoft RSS 3개
-- **자동 생성된 프로젝트**: 19개
+- **개발 기간**: 2025-10-28 (1일)
+- **신규 API**: 2개 엔드포인트
+- **신규 페이지**: 2개 (/library, /generating)
+- **신규 컬렉션**: 1개 (rss_posts)
+- **처리된 RSS 게시물**: 100+ (자동 번역 및 요약)
 
 ---
 
@@ -358,7 +439,7 @@
 - [ ] 고급 언어 감지 라이브러리 (`langdetect`)
 - [ ] WebSocket 실시간 채팅
 - [ ] 카드 개수 동적 조절 (AI 채팅으로)
-- [ ] MetaMask 관련 코드 제거 (불필요)
+- [ ] APScheduler 비동기 실행 개선
 
 ---
 
@@ -377,11 +458,20 @@
 - **컬렉션**: 3개 (sites, projects, crawl_logs)
 - **배포**: 2/2 완료 (Render + Vercel)
 
+### Phase 2.5 완료 현황
+- **전체 진행률**: 100% ✅
+- **개발 기간**: 1일 (2025-10-28)
+- **핵심 기능**: 7/7 완료
+- **신규 API**: 2개 엔드포인트
+- **신규 페이지**: 2개 (Library, Generating)
+- **컬렉션**: 4개 (sites, projects, crawl_logs, rss_posts)
+- **배포**: 2/2 완료 (Render + Vercel)
+
 ### 코드 통계
-- **Backend**: Python, FastAPI, 20+ 파일
-- **Frontend**: TypeScript, Next.js, 30+ 컴포넌트
+- **Backend**: Python, FastAPI, 25+ 파일
+- **Frontend**: TypeScript, Next.js, 35+ 컴포넌트
 - **테스트**: pytest (백엔드 유닛 테스트)
-- **총 커밋**: 100+ commits
+- **총 커밋**: 120+ commits
 
 ---
 
@@ -391,16 +481,17 @@
 - **제품 기획서**: [docs/PRD.md](docs/PRD.md)
 - **개발 문서**: [docs/개발문서.md](docs/개발문서.md)
 - **Phase 2 개발 정의서**: [PHASE2_SPEC.md](PHASE2_SPEC.md)
-- **Phase 2 완료 보고서**: [docs/PHASE2_COMPLETE.md](docs/PHASE2_COMPLETE.md) 🆕
+- **Phase 2 완료 보고서**: [docs/PHASE2_COMPLETE.md](docs/PHASE2_COMPLETE.md)
+- **Phase 2.5 개발 정의서**: [PHASE2_5_SPEC.md](PHASE2_5_SPEC.md)
+- **Phase 2.5 완료 보고서**: [docs/PHASE2_5_COMPLETE.md](docs/PHASE2_5_COMPLETE.md) 🆕
 
 ---
 
-## 🎯 다음 단계: Phase 2.5 또는 Phase 3
+## 🎯 다음 단계: Phase 3
 
-Phase 2가 성공적으로 완료되었습니다! 🎉
+Phase 2.5가 성공적으로 완료되었습니다! 🎉
 
-다음 단계를 선택하세요:
-- **Phase 2.5**: 현재 기능 개선 및 최적화
+다음 단계:
 - **Phase 3**: 인증, 알림, 디자인 시스템 추가
 
 ---
