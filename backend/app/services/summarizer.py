@@ -1,7 +1,7 @@
 """AI 요약 서비스"""
 
 from openai import OpenAI
-from typing import Dict, List
+from typing import Dict, List, Optional
 from app.config import settings
 from app.utils.prompts import SUMMARIZE_PROMPT, KEYWORD_EXTRACTION_PROMPT
 import logging
