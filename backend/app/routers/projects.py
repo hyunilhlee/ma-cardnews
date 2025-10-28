@@ -1,6 +1,7 @@
 """프로젝트 관련 API 라우터"""
 
 from fastapi import APIRouter, HTTPException, status, Query
+from pydantic import BaseModel
 from app.models.project import ProjectCreate, ProjectResponse, SummarizeRequest, SummarizeResponse
 from app.services.scraper import WebScraper
 from app.services.summarizer import AISummarizer
@@ -22,12 +23,15 @@ scraper = WebScraper()
 # card_generator = CardNewsGenerator()  # 프로젝트별로 모델이 다를 수 있으므로 필요시 생성
 
 
-@router.post("/summarize", response_model=SummarizeResponse)
-async def summarize_content(
-    source_type: str,
-    source_url: str,
+class SummarizeContentRequest(BaseModel):
+    """요약 요청 모델"""
+    source_type: str
+    source_url: str
     additional_instructions: Optional[str] = None
-):
+
+
+@router.post("/summarize", response_model=SummarizeResponse)
+async def summarize_content(request: SummarizeContentRequest):
     """
     콘텐츠 요약 (프로젝트 생성 전)
     
@@ -35,10 +39,10 @@ async def summarize_content(
     - 추가 지시사항 반영 (길이, 톤 등)
     """
     try:
-        logger.info(f"Summarizing content from: {source_url}")
+        logger.info(f"Summarizing content from: {request.source_url}")
         
         # URL 스크래핑
-        scraped_data = scraper.scrape_url(source_url)
+        scraped_data = scraper.scrape_url(request.source_url)
         content = scraped_data['content']
         
         if not content or len(content) < 100:
@@ -52,7 +56,7 @@ async def summarize_content(
         summary_result = summarizer.summarize(
             content,
             max_length=None,
-            additional_instructions=additional_instructions
+            additional_instructions=request.additional_instructions
         )
         
         return SummarizeResponse(

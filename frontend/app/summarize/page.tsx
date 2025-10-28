@@ -52,9 +52,9 @@ export default function SummarizePage() {
       
       // 길이별 추가 지시사항
       const lengthInstructions: Record<SummaryLength, string> = {
-        short: '매우 간결하게 핵심만 요약해주세요. 3-5문장 이내로 작성하세요.',
-        medium: '적절한 길이로 요약해주세요. 5-8문장 정도로 작성하세요.',
-        long: '상세하게 요약해주세요. 8-12문장으로 자세히 작성하세요.'
+        short: '간결하게 요약해주세요. 5-8문장 정도로 작성하세요.',
+        medium: '적절한 길이로 요약해주세요. 8-12문장 정도로 작성하세요.',
+        long: '상세하게 요약해주세요. 12-20문장으로 자세히 작성하세요.'
       };
       
       // API 호출
@@ -193,9 +193,9 @@ export default function SummarizePage() {
             </label>
             <div className="grid grid-cols-3 gap-4">
               {[
-                { value: 'short' as SummaryLength, label: '짧게', desc: '3-5문장' },
-                { value: 'medium' as SummaryLength, label: '중간', desc: '5-8문장' },
-                { value: 'long' as SummaryLength, label: '길게', desc: '8-12문장' }
+                { value: 'short' as SummaryLength, label: '짧게', desc: '5-8문장' },
+                { value: 'medium' as SummaryLength, label: '중간', desc: '8-12문장' },
+                { value: 'long' as SummaryLength, label: '길게', desc: '12-20문장' }
               ].map(option => (
                 <button
                   key={option.value}
