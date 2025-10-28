@@ -6,7 +6,7 @@ import hashlib
 import logging
 
 from app.services.rss_service import RSSService
-from app.utils.firebase import get_all_projects, get_all_sites
+from app.utils.firebase import get_all_projects, get_all_sites, get_all_rss_posts
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class LibraryService:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         keyword: Optional[str] = None,
+        year_month: Optional[str] = None,
         page: int = 1,
         page_size: int = 20
     ) -> Dict:
@@ -36,6 +37,7 @@ class LibraryService:
             start_date: 시작 날짜
             end_date: 종료 날짜
             keyword: 키워드 검색
+            year_month: 연월 필터 (YYYY-MM 형식)
             page: 페이지 번호
             page_size: 페이지 크기
             
@@ -54,9 +56,9 @@ class LibraryService:
             projects = self._get_projects_feed(site_id, start_date, end_date)
             logger.info(f"Found {len(projects)} projects from Firestore")
             
-            # 2. 실시간 RSS 피드 가져오기 (캐시 활용)
-            rss_posts = await self._get_rss_posts_feed(site_id)
-            logger.info(f"Found {len(rss_posts)} posts from RSS feeds")
+            # 2. DB에 저장된 RSS 게시물 가져오기
+            rss_posts = self._get_rss_posts_from_db(site_id, start_date, end_date, year_month)
+            logger.info(f"Found {len(rss_posts)} posts from DB")
             
             # 3. 통합 및 중복 제거
             combined = self._merge_feeds(projects, rss_posts)
@@ -149,83 +151,50 @@ class LibraryService:
             logger.error(f"Failed to get projects feed: {str(e)}")
             return []
     
-    async def _get_rss_posts_feed(
+    def _get_rss_posts_from_db(
         self,
-        site_id: Optional[str]
+        site_id: Optional[str],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+        year_month: Optional[str]
     ) -> List[Dict]:
-        """실시간 RSS 피드에서 게시물 조회 (캐시 활용)"""
+        """DB에 저장된 RSS 게시물 조회"""
         try:
-            # 캐시 확인
-            cache_key = f"rss_feed_{site_id or 'all'}"
-            if cache_key in self.cache:
-                cached_data, cached_time = self.cache[cache_key]
-                if (datetime.now(timezone.utc) - cached_time).total_seconds() < self.cache_ttl:
-                    logger.info(f"Using cached RSS feed for {cache_key}")
-                    return cached_data
+            # Firestore에서 RSS 게시물 조회
+            rss_posts = get_all_rss_posts(
+                site_id=site_id,
+                start_date=start_date,
+                end_date=end_date,
+                year_month=year_month,
+                limit=1000
+            )
             
-            # RSS 피드 파싱
-            sites = get_all_sites()
-            if site_id:
-                sites = [s for s in sites if s['id'] == site_id]
-            
-            # active 사이트만
-            sites = [s for s in sites if s.get('status') == 'active']
-            
+            # FeedItem 형식으로 변환
             feed_items = []
-            existing_urls = set()  # 중복 확인용
-            
-            for site in sites:
-                try:
-                    logger.info(f"Parsing RSS feed for site: {site['name']}")
-                    posts = self.rss_service.parse_rss_feed(
-                        rss_url=site['rss_url'],
-                        last_post_id=None
-                    )
-                    
-                    for post in posts[:50]:  # 최대 50개만
-                        post_url = post['link']
-                        
-                        # URL 중복 체크
-                        if post_url in existing_urls:
-                            continue
-                        existing_urls.add(post_url)
-                        
-                        # 이미 프로젝트가 있는지 확인 (간단히 URL로)
-                        # 실제로는 Firestore 쿼리 필요하지만, 성능을 위해 생략
-                        # (나중에 merge에서 중복 제거됨)
-                        
-                        post_id = self._generate_post_id(post_url)
-                        
-                        feed_items.append({
-                            'id': post_id,
-                            'type': 'rss_post',
-                            'title': post['title'],
-                            'source': {
-                                'site_id': site['id'],
-                                'site_name': site['name'],
-                                'site_url': site['url']
-                            },
-                            'keywords': [],  # RSS에서는 키워드 없음
-                            'summary': post.get('summary', '')[:200],
-                            'published_at': post['published'],
-                            'url': post_url,
-                            'has_cardnews': False,
-                            'project_id': None,
-                            'status': None,
-                            'is_new': self._is_new(post['published'])
-                        })
-                        
-                except Exception as e:
-                    logger.error(f"Failed to parse RSS feed for site {site['name']}: {str(e)}")
-                    continue
-            
-            # 캐시 저장
-            self.cache[cache_key] = (feed_items, datetime.now(timezone.utc))
+            for post in rss_posts:
+                feed_items.append({
+                    'id': post['id'],
+                    'type': 'rss_post',
+                    'title': post['title'],
+                    'source': {
+                        'site_id': post['site_id'],
+                        'site_name': post['site_name'],
+                        'site_url': ''
+                    },
+                    'keywords': [],  # RSS 게시물은 키워드 없음
+                    'summary': post.get('summary', '')[:200],
+                    'published_at': post['published_at'],
+                    'url': post['url'],
+                    'has_cardnews': post.get('has_cardnews', False),
+                    'project_id': post.get('project_id'),
+                    'status': None,
+                    'is_new': self._is_new(post.get('crawled_at'))
+                })
             
             return feed_items
             
         except Exception as e:
-            logger.error(f"Failed to get RSS posts feed: {str(e)}")
+            logger.error(f"Failed to get RSS posts from DB: {str(e)}")
             return []
     
     def _merge_feeds(

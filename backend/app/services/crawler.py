@@ -95,6 +95,29 @@ class SiteCrawler:
             
             logger.info(f"Found {len(new_posts)} new posts to process")
             
+            # Phase 2.5: RSS 게시물을 DB에 영구 저장
+            from app.utils.firebase import create_rss_post
+            saved_posts = 0
+            for post in posts:  # 모든 게시물 저장 (새 게시물뿐만 아니라)
+                try:
+                    post_data = {
+                        'site_id': site_id,
+                        'site_name': site['name'],
+                        'title': post['title'],
+                        'url': post['link'],
+                        'content': post.get('content', ''),
+                        'summary': post.get('summary', ''),
+                        'author': post.get('author'),
+                        'published_at': post['published']
+                    }
+                    create_rss_post(post_data)
+                    saved_posts += 1
+                except Exception as e:
+                    logger.error(f"Failed to save RSS post: {str(e)}")
+                    continue
+            
+            logger.info(f"Saved {saved_posts} RSS posts to DB")
+            
             # 자동 생성 파이프라인 실행
             projects_created = 0
             if new_posts:

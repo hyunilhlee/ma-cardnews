@@ -13,6 +13,7 @@ interface FeedFiltersProps {
   filters: {
     siteId: string | null;
     keyword: string;
+    yearMonth: string | null;
     page: number;
   };
   onChange: (filters: any) => void;
@@ -54,16 +55,36 @@ export function FeedFilters({ filters, onChange }: FeedFiltersProps) {
     }
   };
 
+  const handleYearMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value === '' ? null : e.target.value;
+    onChange({ ...filters, yearMonth: value, page: 1 });
+  };
+
   const handleReset = () => {
     setLocalKeyword('');
-    onChange({ siteId: null, keyword: '', page: 1 });
+    onChange({ siteId: null, keyword: '', yearMonth: null, page: 1 });
+  };
+
+  // 최근 12개월 생성
+  const generateMonthOptions = () => {
+    const options = [];
+    const now = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+      options.push({ value: yearMonth, label });
+    }
+    
+    return options;
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {/* 사이트 선택 */}
-        <div className="flex-1">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             📍 사이트 선택
           </label>
@@ -83,8 +104,27 @@ export function FeedFilters({ filters, onChange }: FeedFiltersProps) {
           </select>
         </div>
 
+        {/* 월별 필터 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            📅 월별 필터
+          </label>
+          <select
+            value={filters.yearMonth || ''}
+            onChange={handleYearMonthChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+          >
+            <option value="">전체 기간</option>
+            {generateMonthOptions().map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* 키워드 검색 */}
-        <div className="flex-1">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             🔍 키워드 검색
           </label>
@@ -105,25 +145,30 @@ export function FeedFilters({ filters, onChange }: FeedFiltersProps) {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* 초기화 버튼 */}
-        <div className="flex items-end">
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-          >
-            🔄 초기화
-          </button>
-        </div>
+      {/* 초기화 버튼 */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleReset}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+        >
+          🔄 초기화
+        </button>
       </div>
 
       {/* 활성 필터 표시 */}
-      {(filters.siteId || filters.keyword) && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+      {(filters.siteId || filters.keyword || filters.yearMonth) && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
           <span className="font-medium">활성 필터:</span>
           {filters.siteId && (
             <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
               사이트: {sites.find(s => s.id === filters.siteId)?.name || '알 수 없음'}
+            </span>
+          )}
+          {filters.yearMonth && (
+            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+              기간: {filters.yearMonth}
             </span>
           )}
           {filters.keyword && (

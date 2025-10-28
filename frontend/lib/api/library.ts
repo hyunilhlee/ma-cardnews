@@ -55,6 +55,7 @@ export async function getLibraryFeed(params: {
   start_date?: string;
   end_date?: string;
   keyword?: string;
+  year_month?: string;
   page?: number;
   page_size?: number;
 }): Promise<LibraryFeedResponse> {
@@ -64,6 +65,7 @@ export async function getLibraryFeed(params: {
   if (params.start_date) queryParams.append('start_date', params.start_date);
   if (params.end_date) queryParams.append('end_date', params.end_date);
   if (params.keyword) queryParams.append('keyword', params.keyword);
+  if (params.year_month) queryParams.append('year_month', params.year_month);
   if (params.page) queryParams.append('page', params.page.toString());
   if (params.page_size) queryParams.append('page_size', params.page_size.toString());
   

@@ -26,6 +26,7 @@ async def get_library_feed(
     start_date: Optional[datetime] = Query(None, description="시작 날짜"),
     end_date: Optional[datetime] = Query(None, description="종료 날짜"),
     keyword: Optional[str] = Query(None, description="키워드 검색"),
+    year_month: Optional[str] = Query(None, description="연월 필터 (YYYY-MM 형식)"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     page_size: int = Query(20, ge=1, le=100, description="페이지 크기")
 ):
@@ -46,6 +47,7 @@ async def get_library_feed(
             start_date=start_date,
             end_date=end_date,
             keyword=keyword,
+            year_month=year_month,
             page=page,
             page_size=page_size
         )

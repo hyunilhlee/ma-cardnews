@@ -19,6 +19,7 @@ export default function LibraryPage() {
   const [filters, setFilters] = useState({
     siteId: null as string | null,
     keyword: '',
+    yearMonth: null as string | null,
     page: 1,
     pageSize: 20
   });
@@ -34,6 +35,7 @@ export default function LibraryPage() {
       const data = await getLibraryFeed({
         site_id: filters.siteId || undefined,
         keyword: filters.keyword || undefined,
+        year_month: filters.yearMonth || undefined,
         page: filters.page,
         page_size: filters.pageSize
       });

@@ -565,3 +565,179 @@ def delete_project(project_id: str):
     
     logger.info(f"Project deleted: {project_id}")
 
+
+# ==================================================
+# RSS Posts (Phase 2.5)
+# ==================================================
+
+def create_rss_post(post_data: Dict) -> str:
+    """
+    RSS 게시물 생성 (DB 영구 저장)
+    
+    Args:
+        post_data: RSS 게시물 데이터
+        
+    Returns:
+        생성된 RSS 게시물 ID
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    import hashlib
+    from datetime import datetime, timezone
+    
+    # URL을 해시하여 ID 생성 (중복 방지)
+    post_id = hashlib.md5(post_data['url'].encode()).hexdigest()
+    
+    # 기존 게시물 확인
+    existing_doc = db.collection('rss_posts').document(post_id).get()
+    if existing_doc.exists:
+        logger.info(f"RSS post already exists: {post_id}")
+        return post_id
+    
+    # 새 게시물 저장
+    post_doc = {
+        'id': post_id,
+        'site_id': post_data['site_id'],
+        'site_name': post_data['site_name'],
+        'title': post_data['title'],
+        'url': post_data['url'],
+        'content': post_data.get('content', ''),
+        'summary': post_data.get('summary', ''),
+        'author': post_data.get('author'),
+        'published_at': post_data['published_at'],
+        'crawled_at': datetime.now(timezone.utc),
+        'has_cardnews': False,
+        'project_id': None
+    }
+    
+    db.collection('rss_posts').document(post_id).set(post_doc)
+    logger.info(f"RSS post created: {post_id}")
+    
+    return post_id
+
+
+def get_rss_post(post_id: str) -> Optional[Dict]:
+    """
+    RSS 게시물 조회
+    
+    Args:
+        post_id: RSS 게시물 ID
+        
+    Returns:
+        RSS 게시물 데이터
+    """
+    db = get_db()
+    if db is None:
+        return None
+    
+    doc = db.collection('rss_posts').document(post_id).get()
+    
+    if not doc.exists:
+        return None
+    
+    return doc.to_dict()
+
+
+def get_all_rss_posts(
+    site_id: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    year_month: Optional[str] = None,
+    limit: int = 1000
+) -> List[Dict]:
+    """
+    RSS 게시물 목록 조회
+    
+    Args:
+        site_id: 사이트 ID 필터
+        start_date: 시작 날짜
+        end_date: 종료 날짜
+        year_month: 연월 필터 (YYYY-MM 형식)
+        limit: 최대 개수
+        
+    Returns:
+        RSS 게시물 리스트
+    """
+    db = get_db()
+    if db is None:
+        return []
+    
+    query = db.collection('rss_posts')
+    
+    # 사이트 필터
+    if site_id:
+        query = query.where('site_id', '==', site_id)
+    
+    # 연월 필터 (YYYY-MM)
+    if year_month:
+        from datetime import datetime
+        import calendar
+        
+        # YYYY-MM을 파싱하여 해당 월의 시작일과 끝일 계산
+        year, month = map(int, year_month.split('-'))
+        start_date = datetime(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end_date = datetime(year, month, last_day, 23, 59, 59)
+    
+    # 날짜 필터
+    if start_date:
+        query = query.where('published_at', '>=', start_date)
+    if end_date:
+        query = query.where('published_at', '<=', end_date)
+    
+    # 최신순 정렬
+    query = query.order_by('published_at', direction='DESCENDING')
+    
+    # 제한
+    query = query.limit(limit)
+    
+    posts = []
+    for doc in query.stream():
+        posts.append(doc.to_dict())
+    
+    return posts
+
+
+def update_rss_post(post_id: str, data: Dict) -> Dict:
+    """
+    RSS 게시물 업데이트
+    
+    Args:
+        post_id: RSS 게시물 ID
+        data: 업데이트할 데이터
+        
+    Returns:
+        업데이트된 RSS 게시물
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    db.collection('rss_posts').document(post_id).update(data)
+    logger.info(f"RSS post updated: {post_id}")
+    
+    doc = db.collection('rss_posts').document(post_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def update_rss_post_project_link(post_id: str, project_id: str):
+    """
+    RSS 게시물과 프로젝트 연결
+    
+    Args:
+        post_id: RSS 게시물 ID
+        project_id: 프로젝트 ID
+    """
+    db = get_db()
+    if db is None:
+        raise ValueError("Firestore not initialized")
+    
+    db.collection('rss_posts').document(post_id).update({
+        'has_cardnews': True,
+        'project_id': project_id
+    })
+    
+    logger.info(f"RSS post linked to project: {post_id} -> {project_id}")
+
