@@ -40,20 +40,20 @@ Text / 텍스트:
 Keywords / 키워드:
 """
 
-# 카드뉴스 생성 프롬프트 (다국어 지원)
+# 카드뉴스 생성 프롬프트 (한글 우선)
 CARD_GENERATION_PROMPT = """
-**CRITICAL INSTRUCTION: ALL card content (title and content fields) MUST be in the SAME LANGUAGE as the original text below.**
-- If original text is in English → Write ALL cards in English
-- If original text is in Korean → Write ALL cards in Korean
-- If original text is in Japanese → Write ALL cards in Japanese
-- DO NOT translate or mix languages!
+**🚨 최우선 지시사항: 모든 카드 내용을 반드시 한글로 작성하세요! 🚨**
 
-**중요 지시: 모든 카드 내용(title과 content 필드)은 반드시 아래 원문과 동일한 언어로 작성하세요.**
-- 원문이 영어면 → 모든 카드를 영어로 작성
-- 원문이 한국어면 → 모든 카드를 한국어로 작성
-- 언어를 번역하거나 섞지 마세요!
+**CRITICAL INSTRUCTION: You MUST write ALL card content in KOREAN (한글)!**
+- ALL titles → Korean (한글)
+- ALL content → Korean (한글)
+- Even if the original text is in English, translate and write in Korean!
+- 원문이 영어라도 한글로 번역해서 작성하세요!
+- DO NOT write in English! 영어로 쓰지 마세요!
 
-Create {card_count} card news slides based on the following content.
+**중요: 아래 내용을 바탕으로 {card_count}개의 카드뉴스를 한글로 작성하세요.**
+
+Create {card_count} card news slides in KOREAN based on the following content.
 
 Summary / 요약:
 {summary}
@@ -61,35 +61,35 @@ Summary / 요약:
 Original Text / 원문:
 {original_text}
 
-Respond in the following JSON format:
+Respond in the following JSON format (모든 내용을 한글로!):
 {{
   "cards": [
     {{
       "type": "title",
-      "title": "Main Title (in SAME language as original text)",
-      "content": "Subtitle (in SAME language as original text)"
+      "title": "메인 제목 (한글로 작성)",
+      "content": "부제목 (한글로 작성)"
     }},
     {{
       "type": "content",
-      "title": "Section Title (in SAME language as original text)",
-      "content": "Section content (in SAME language as original text)"
+      "title": "섹션 제목 (한글로 작성)",
+      "content": "섹션 내용 (한글로 작성)"
     }},
     ...
     {{
       "type": "closing",
-      "title": "Closing Title (in SAME language as original text)",
-      "content": "Closing message (in SAME language as original text)"
+      "title": "마무리 제목 (한글로 작성)",
+      "content": "마무리 메시지 (한글로 작성)"
     }}
   ]
 }}
 
-Rules:
-1. First card must be "title" type
-2. Last card must be "closing" type
-3. Middle cards should be "content" type
-4. Keep content clear and concise
-5. Must respond in valid JSON format only
-6. **CRITICAL: Every title and content field MUST be in the SAME LANGUAGE as the original text above!**
+Rules (규칙):
+1. First card must be "title" type (첫 카드는 title 타입)
+2. Last card must be "closing" type (마지막 카드는 closing 타입)
+3. Middle cards should be "content" type (중간 카드는 content 타입)
+4. Keep content clear and concise (명확하고 간결하게)
+5. Must respond in valid JSON format only (유효한 JSON 형식으로만 응답)
+6. **🚨 CRITICAL: Every title and content field MUST be in KOREAN (한글)! 모든 title과 content는 반드시 한글로 작성!**
 """
 
 # 채팅 시스템 프롬프트

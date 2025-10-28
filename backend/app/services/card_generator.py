@@ -53,7 +53,7 @@ class CardNewsGenerator:
                 messages=[
                     {
                         "role": "system", 
-                        "content": "You are a card news creation expert. Structure the given content into card news format. Always respond in valid JSON format only. Respond in the SAME LANGUAGE as the input text. 당신은 카드뉴스 제작 전문가입니다. 주어진 내용을 카드뉴스 형식으로 구조화합니다. 반드시 유효한 JSON 형식으로만 응답하세요. 입력 텍스트와 동일한 언어로 응답하세요."
+                        "content": "🚨 CRITICAL: You are a Korean card news creation expert. You MUST write ALL content in KOREAN (한글) only! Even if the input is in English, translate and respond in Korean. 당신은 한국어 카드뉴스 제작 전문가입니다. 모든 내용을 반드시 한글로 작성하세요! 원문이 영어라도 한글로 번역해서 응답하세요. Always respond in valid JSON format only. 반드시 유효한 JSON 형식으로만 응답하세요."
                     },
                     {"role": "user", "content": prompt}
                 ],

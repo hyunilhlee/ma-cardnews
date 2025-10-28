@@ -294,14 +294,25 @@ async def generate_sections(project_id: str):
                 detail="먼저 요약을 생성해주세요."
             )
         
+        # 콘텐츠가 너무 짧아 자동 생성이 불가능한 경우
+        if project.get('last_error') and 'Content too short' in project.get('last_error', ''):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="콘텐츠가 너무 짧아 카드뉴스를 생성할 수 없습니다. 더 긴 내용을 입력해주세요."
+            )
+        
         # 카드 섹션 생성 (프로젝트에 저장된 모델 사용)
         logger.info(f"Generating sections for project: {project_id}")
         project_model = project.get('model', 'gpt-4o-mini')
         project_generator = CardNewsGenerator(model=project_model)
+        
+        # recommended_card_count가 None인 경우 기본값 5 사용
+        card_count = project.get('recommended_card_count') or 5
+        
         sections = project_generator.generate_sections(
             summary=project['summary'],
             original_text=project['source_content'],
-            card_count=project.get('recommended_card_count', 5)
+            card_count=card_count
         )
         
         # 저장 (Firebase 또는 인메모리)
