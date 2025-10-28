@@ -59,8 +59,9 @@ async def get_library_feed(
                 id=item['id'],
                 type=item['type'],
                 title=item['title'],
+                title_original=item.get('title_original'),  # Optional field
                 source=FeedSource(**item['source']),
-                keywords=item['keywords'],
+                keywords=item.get('keywords', []),  # Default to empty list
                 summary=item['summary'],
                 published_at=item['published_at'],
                 url=item['url'],

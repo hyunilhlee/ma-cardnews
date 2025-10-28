@@ -43,29 +43,33 @@ async def startup_event():
     firebase.initialize_firebase()
     
     # Phase 2: 스케줄러 초기화 및 활성 사이트 로드
+    # ⚠️ 임시 비활성화: 크롤러가 Library API를 블로킹하는 문제 수정 중
     try:
-        from app.services.scheduler_service import init_scheduler
-        from app.services.crawler import crawl_site_job
-        from app.utils.firebase import get_all_sites
-        
-        # 스케줄러 시작
-        scheduler = init_scheduler()
-        
-        # 활성 사이트 로드 및 작업 등록
-        sites = get_all_sites()
-        active_sites = [s for s in sites if s.get('status') == 'active']
-        
-        for site in active_sites:
-            scheduler.add_site_job(
-                site_id=site['id'],
-                site_name=site['name'],
-                rss_url=site['rss_url'],
-                crawl_interval=site['crawl_interval'],
-                crawl_func=crawl_site_job
-            )
-        
         logger = logging.getLogger(__name__)
-        logger.info(f"Scheduler loaded {len(active_sites)} active sites")
+        logger.warning("⚠️ Scheduler temporarily disabled to fix Library API blocking issue")
+        
+        # from app.services.scheduler_service import init_scheduler
+        # from app.services.crawler import crawl_site_job
+        # from app.utils.firebase import get_all_sites
+        
+        # # 스케줄러 시작
+        # scheduler = init_scheduler()
+        
+        # # 활성 사이트 로드 및 작업 등록
+        # sites = get_all_sites()
+        # active_sites = [s for s in sites if s.get('status') == 'active']
+        
+        # for site in active_sites:
+        #     scheduler.add_site_job(
+        #         site_id=site['id'],
+        #         site_name=site['name'],
+        #         rss_url=site['rss_url'],
+        #         crawl_interval=site['crawl_interval'],
+        #         crawl_func=crawl_site_job
+        #     )
+        
+        # logger = logging.getLogger(__name__)
+        # logger.info(f"Scheduler loaded {len(active_sites)} active sites")
         
     except Exception as e:
         logger = logging.getLogger(__name__)
