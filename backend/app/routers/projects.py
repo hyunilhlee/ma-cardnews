@@ -65,7 +65,7 @@ async def summarize_content(request: SummarizeContentRequest):
         return SummarizeResponse(
             summary=summary_result['summary'],
             keywords=summary_result['keywords'],
-            recommended_cards=summary_result['card_count']
+            recommended_card_count=summary_result['card_count']
         )
         
     except HTTPException:
