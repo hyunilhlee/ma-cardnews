@@ -36,19 +36,51 @@ class WebScraper:
         try:
             logger.info(f"Scraping URL: {url}")
             # newspaper3k 사용 (뉴스 기사에 최적화)
-            article = Article(url, language='ko')
-            article.download()
-            article.parse()
+            # 언어 자동 감지 시도 (한국어 우선, 실패 시 영어)
+            article = None
+            content = ""
+            
+            # 먼저 언어 지정 없이 시도
+            try:
+                article = Article(url)
+                article.download()
+                article.parse()
+                content = article.text or ""
+            except:
+                pass
+            
+            # content가 없으면 한국어로 시도
+            if not content:
+                try:
+                    article = Article(url, language='ko')
+                    article.download()
+                    article.parse()
+                    content = article.text or ""
+                except:
+                    pass
+            
+            # 여전히 없으면 영어로 시도
+            if not content:
+                try:
+                    article = Article(url, language='en')
+                    article.download()
+                    article.parse()
+                    content = article.text or ""
+                except:
+                    pass
+            
+            if not article:
+                raise Exception("Failed to parse article with newspaper3k")
             
             result = {
                 'title': article.title or "제목 없음",
-                'content': article.text or "",
+                'content': content,
                 'authors': article.authors or [],
                 'publish_date': str(article.publish_date) if article.publish_date else None,
                 'top_image': article.top_image or None
             }
             
-            logger.info(f"Successfully scraped: {result['title']}")
+            logger.info(f"Successfully scraped: {result['title']} ({len(content)} chars)")
             return result
             
         except Exception as e:

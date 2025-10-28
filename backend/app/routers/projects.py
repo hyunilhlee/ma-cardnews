@@ -43,12 +43,15 @@ async def summarize_content(request: SummarizeContentRequest):
         
         # URL 스크래핑
         scraped_data = scraper.scrape_url(request.source_url)
-        content = scraped_data['content']
+        content = scraped_data.get('content', '')
+        
+        logger.info(f"Scraped content length: {len(content)} characters")
         
         if not content or len(content) < 100:
+            logger.warning(f"Content too short: {len(content)} characters (minimum 100)")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="콘텐츠를 가져올 수 없거나 너무 짧습니다."
+                detail=f"콘텐츠가 너무 짧습니다 ({len(content)}자). 최소 100자 이상 필요합니다."
             )
         
         # 요약 생성
