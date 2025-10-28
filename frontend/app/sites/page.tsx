@@ -106,10 +106,10 @@ export default function SitesPage() {
         
         // 자동으로 name과 url 채우기
         if (!newSite.name && result.title) {
-          setNewSite(prev => ({ ...prev, name: result.title }));
+          setNewSite(prev => ({ ...prev, name: result.title || '' }));
         }
         if (!newSite.url && result.link) {
-          setNewSite(prev => ({ ...prev, url: result.link }));
+          setNewSite(prev => ({ ...prev, url: result.link || '' }));
         }
       } else {
         setValidationResult({ 
