@@ -176,13 +176,14 @@ class LibraryService:
                     'id': post['id'],
                     'type': 'rss_post',
                     'title': post['title'],
+                    'title_original': post.get('title_original'),  # 원본 제목
                     'source': {
                         'site_id': post['site_id'],
                         'site_name': post['site_name'],
                         'site_url': ''
                     },
-                    'keywords': [],  # RSS 게시물은 키워드 없음
-                    'summary': post.get('summary', '')[:200],
+                    'keywords': post.get('keywords', []),  # DB에 저장된 키워드
+                    'summary': post.get('summary', ''),  # 전체 요약 표시
                     'published_at': post['published_at'],
                     'url': post['url'],
                     'has_cardnews': post.get('has_cardnews', False),

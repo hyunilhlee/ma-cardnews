@@ -38,6 +38,7 @@ export default function ProjectPage() {
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [sectionsBackup, setSectionsBackup] = useState<any[]>([]); // 이전 섹션 백업
 
   // 프로젝트 로드
   useEffect(() => {
@@ -139,6 +140,9 @@ export default function ProjectPage() {
   const handleSendMessage = async (message: string) => {
     if (!currentProject) return;
 
+    // 현재 섹션 백업 (복원용)
+    setSectionsBackup([...sections]);
+
     // 사용자 메시지 추가
     const userMessage: ChatMessage = {
       role: 'user',
@@ -175,6 +179,18 @@ export default function ProjectPage() {
     } finally {
       setIsChatLoading(false);
     }
+  };
+
+  // 이전 상태로 복원
+  const handleUndoChanges = () => {
+    if (sectionsBackup.length === 0) {
+      toast.error('복원할 이전 상태가 없습니다');
+      return;
+    }
+
+    setSections([...sectionsBackup]);
+    setSectionsBackup([]); // 백업 초기화
+    toast.success('✅ 이전 상태로 복원되었습니다!');
   };
 
   // 로딩 중
@@ -298,6 +314,8 @@ export default function ProjectPage() {
                 messages={chatMessages}
                 onSendMessage={handleSendMessage}
                 isLoading={isChatLoading}
+                onUndo={handleUndoChanges}
+                hasBackup={sectionsBackup.length > 0}
               />
             </div>
             {/* 모바일 - 하단 고정 */}
@@ -306,6 +324,8 @@ export default function ProjectPage() {
                 messages={chatMessages}
                 onSendMessage={handleSendMessage}
                 isLoading={isChatLoading}
+                onUndo={handleUndoChanges}
+                hasBackup={sectionsBackup.length > 0}
               />
             </div>
           </div>

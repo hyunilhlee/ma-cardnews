@@ -19,27 +19,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        {/* MetaMask 및 기타 확장 프로그램 오류 필터링 */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // MetaMask 및 브라우저 확장 프로그램 오류 필터링
-              const originalError = console.error;
-              console.error = function(...args) {
-                const errorString = args.join(' ');
-                // MetaMask 관련 오류 무시
-                if (errorString.includes('MetaMask') || 
-                    errorString.includes('chrome-extension://') ||
-                    errorString.includes('extension not found')) {
-                  return;
-                }
-                originalError.apply(console, args);
-              };
-            `,
-          }}
-        />
-      </head>
       <body className={inter.className} suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
           <Header />

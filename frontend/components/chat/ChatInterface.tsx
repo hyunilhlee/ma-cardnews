@@ -12,12 +12,16 @@ interface ChatInterfaceProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
+  onUndo?: () => void;  // 취소하기 콜백
+  hasBackup?: boolean;  // 복원 가능한 백업 존재 여부
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   onSendMessage,
   isLoading = false,
+  onUndo,
+  hasBackup = false,
 }) => {
   const [input, setInput] = useState('');
   const [isExpanded, setIsExpanded] = useState(true); // 모바일에서 확장/축소 상태
@@ -104,6 +108,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* 입력 영역 */}
       <div className={`px-6 py-4 border-t border-gray-200 ${isExpanded ? 'block' : 'hidden md:block'}`}>
+        {/* 취소하기 버튼 */}
+        {hasBackup && onUndo && (
+          <div className="mb-3">
+            <button
+              onClick={onUndo}
+              className="w-full px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <span>↩️</span>
+              <span>이전 상태로 복원하기</span>
+            </button>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <input
             type="text"

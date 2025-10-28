@@ -16,6 +16,7 @@ export interface LibraryFeedItem {
   id: string;
   type: 'project' | 'rss_post';
   title: string;
+  title_original?: string | null;  // 원본 제목 (영문 등)
   source: FeedSource;
   keywords: string[];
   summary: string;

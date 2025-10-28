@@ -17,6 +17,7 @@ class LibraryFeedItem(BaseModel):
     id: str
     type: Literal['project', 'rss_post']  # 프로젝트 또는 RSS 게시물
     title: str
+    title_original: Optional[str] = None  # 원본 제목 (영문 등)
     source: FeedSource
     keywords: List[str] = []
     summary: str

@@ -41,6 +41,11 @@ export function FeedCard({ item, onCreateCardnews }: FeedCardProps) {
     
     try {
       const date = new Date(dateStr);
+      // 날짜 + 시간 표시 (시간 정보가 있으면)
+      const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+      if (hasTime) {
+        return format(date, 'yyyy년 M월 d일 HH:mm', { locale: ko });
+      }
       return format(date, 'yyyy년 M월 d일', { locale: ko });
     } catch {
       return '날짜 형식 오류';
@@ -60,6 +65,12 @@ export function FeedCard({ item, onCreateCardnews }: FeedCardProps) {
             )}
             {item.title}
           </h3>
+          {/* 원본 제목 (영문 등) */}
+          {item.title_original && item.title_original !== item.title && (
+            <p className="text-sm text-gray-500 italic mt-1">
+              {item.title_original}
+            </p>
+          )}
         </div>
         
         <div className="ml-4">
