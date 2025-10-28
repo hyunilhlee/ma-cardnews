@@ -51,18 +51,34 @@ export default function LibraryPage() {
   };
 
   const handleCreateCardnews = async (item: LibraryFeedItem) => {
-    // 요약 페이지로 이동 (RSS 게시물 정보 전달)
-    // URL 파라미터로 전달
-    const params = new URLSearchParams({
-      source: 'rss',
-      url: item.url,
-      title: item.title,
-      site_id: item.source.site_id || '',
-      site_name: item.source.site_name,
-      rss_post_id: item.id
-    });
+    // 직접 카드뉴스 생성 (DB에 이미 요약/키워드 있음)
+    setCreatingIds(prev => new Set(prev).add(item.id));
     
-    router.push(`/summarize?${params.toString()}`);
+    try {
+      toast.loading('카드뉴스를 생성하고 있습니다...', { id: `creating-${item.id}` });
+      
+      const result = await createCardnewsFromFeed({
+        rss_post_id: item.id,
+        site_id: item.source.site_id || '',
+        url: item.url,
+        title: item.title,
+        content: item.summary // DB에 저장된 요약 사용
+      });
+      
+      toast.success('카드뉴스 생성 완료!', { id: `creating-${item.id}` });
+      
+      // 편집 페이지로 이동
+      router.push(`/edit/${result.project_id}`);
+    } catch (error: any) {
+      console.error('Failed to create cardnews:', error);
+      toast.error(error.message || '카드뉴스 생성 실패', { id: `creating-${item.id}` });
+    } finally {
+      setCreatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+    }
   };
 
   const handlePageChange = (newPage: number) => {

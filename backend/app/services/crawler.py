@@ -95,18 +95,82 @@ class SiteCrawler:
             
             logger.info(f"Found {len(new_posts)} new posts to process")
             
-            # Phase 2.5: RSS 게시물을 DB에 영구 저장
+            # Phase 2.5: RSS 게시물을 DB에 영구 저장 (자동 요약/키워드/번역)
             from app.utils.firebase import create_rss_post
+            from app.services.summarizer import AISummarizer
+            from app.services.scraper import WebScraper
+            
+            summarizer = AISummarizer(model='gpt-4.1-nano')
+            scraper = WebScraper()
             saved_posts = 0
+            
             for post in posts:  # 모든 게시물 저장 (새 게시물뿐만 아니라)
                 try:
+                    # 1. 콘텐츠 가져오기 (RSS summary가 부족하면 스크래핑)
+                    content = post.get('content', '') or post.get('summary', '')
+                    
+                    # content가 짧으면 URL 스크래핑 시도
+                    if len(content) < 200 and post.get('link'):
+                        try:
+                            scraped_data = scraper.scrape_url(post['link'])
+                            content = scraped_data.get('content', content)
+                            logger.info(f"Scraped content for: {post['title']} ({len(content)} chars)")
+                        except Exception as e:
+                            logger.warning(f"Scraping failed for {post['link']}: {str(e)}")
+                    
+                    # 2. AI 요약 및 키워드 추출 (중간 길이: 8-12문장)
+                    ai_summary = ""
+                    keywords = []
+                    
+                    if content and len(content) >= 100:
+                        try:
+                            summary_result = summarizer.summarize(
+                                content,
+                                max_length=None,
+                                additional_instructions="적절한 길이로 요약해주세요. 8-12문장 정도로 작성하세요. 모든 내용을 한글로 번역해서 작성해주세요."
+                            )
+                            ai_summary = summary_result.get('summary', '')
+                            keywords = summary_result.get('keywords', [])
+                            logger.info(f"Summary generated for: {post['title']} ({len(ai_summary)} chars, {len(keywords)} keywords)")
+                        except Exception as e:
+                            logger.warning(f"AI summarization failed for {post['title']}: {str(e)}")
+                            ai_summary = content[:500]  # Fallback: 원본 일부 사용
+                    else:
+                        ai_summary = content[:500] if content else post.get('summary', '')[:500]
+                    
+                    # 3. 제목도 한글로 번역 (영문인 경우)
+                    title_kr = post['title']
+                    if content and len(content) >= 100:
+                        try:
+                            # 제목 번역 (영문인 경우만)
+                            import re
+                            if re.search(r'[a-zA-Z]{3,}', title_kr):  # 영문이 포함된 경우
+                                from openai import OpenAI
+                                client = OpenAI()
+                                response = client.chat.completions.create(
+                                    model='gpt-4.1-nano',
+                                    messages=[
+                                        {"role": "system", "content": "당신은 전문 번역가입니다. 제목을 간결하고 자연스러운 한글로 번역해주세요."},
+                                        {"role": "user", "content": f"다음 제목을 한글로 번역해주세요:\n\n{title_kr}"}
+                                    ],
+                                    temperature=0.3,
+                                    max_tokens=100
+                                )
+                                title_kr = response.choices[0].message.content.strip()
+                                logger.info(f"Title translated: {post['title']} → {title_kr}")
+                        except Exception as e:
+                            logger.warning(f"Title translation failed: {str(e)}")
+                    
+                    # 4. DB 저장
                     post_data = {
                         'site_id': site_id,
                         'site_name': site['name'],
-                        'title': post['title'],
+                        'title': title_kr,  # 번역된 제목
+                        'title_original': post['title'],  # 원본 제목 보존
                         'url': post['link'],
-                        'content': post.get('content', ''),
-                        'summary': post.get('summary', ''),
+                        'content': content,
+                        'summary': ai_summary,  # AI 생성 요약
+                        'keywords': keywords,  # AI 추출 키워드
                         'author': post.get('author'),
                         'published_at': post['published']
                     }
@@ -116,7 +180,7 @@ class SiteCrawler:
                     logger.error(f"Failed to save RSS post: {str(e)}")
                     continue
             
-            logger.info(f"Saved {saved_posts} RSS posts to DB")
+            logger.info(f"Saved {saved_posts} RSS posts to DB (with AI summary & keywords)")
             
             # 자동 생성 파이프라인 실행
             projects_created = 0

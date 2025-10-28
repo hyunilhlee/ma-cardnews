@@ -1,7 +1,7 @@
 'use client';
 
 import { LibraryFeedItem } from '@/lib/api/library';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import Link from 'next/link';
 
@@ -41,7 +41,7 @@ export function FeedCard({ item, onCreateCardnews }: FeedCardProps) {
     
     try {
       const date = new Date(dateStr);
-      return formatDistanceToNow(date, { addSuffix: true, locale: ko });
+      return format(date, 'yyyy년 M월 d일', { locale: ko });
     } catch {
       return '날짜 형식 오류';
     }
