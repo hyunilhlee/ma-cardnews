@@ -119,7 +119,7 @@ async def create_cardnews_from_feed(request: CreateCardnewsRequest):
         }
         
         # 카드뉴스 생성
-        project_id = await pipeline.generate_cardnews_from_post(
+        project_id = pipeline.generate_cardnews_from_post(
             post=post,
             site_id=request.site_id,
             site_name=site['name']
