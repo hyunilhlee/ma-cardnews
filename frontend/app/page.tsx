@@ -20,7 +20,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           {/* RSS 사이트 설정 */}
           <div 
             onClick={() => router.push('/sites')}
@@ -59,6 +59,25 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">저장된 프로젝트</h2>
               <p className="text-gray-600">
                 생성된 카드뉴스 보기
+              </p>
+            </div>
+          </div>
+
+          {/* RSS Library - 신규! */}
+          <div 
+            onClick={() => router.push('/library')}
+            className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-xl p-8 cursor-pointer hover:shadow-2xl transform hover:scale-105 transition-all duration-200 relative"
+          >
+            <div className="absolute top-2 right-2">
+              <span className="inline-block px-3 py-1 text-xs font-bold text-white bg-red-500 rounded-full">
+                NEW
+              </span>
+            </div>
+            <div className="text-center">
+              <div className="text-6xl mb-4">📰</div>
+              <h2 className="text-2xl font-bold text-white mb-2">RSS Library</h2>
+              <p className="text-blue-100">
+                모든 RSS 피드를 한눈에
               </p>
             </div>
           </div>

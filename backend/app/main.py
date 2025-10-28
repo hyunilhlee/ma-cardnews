@@ -98,6 +98,16 @@ except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"Sites router not available: {e}")
 
+# Phase 2.5: Library 라우터
+try:
+    from app.routers import library
+    app.include_router(library.router, tags=["library"])
+    logger = logging.getLogger(__name__)
+    logger.info("Library router registered")
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Library router not available: {e}")
+
 
 @app.get("/")
 async def root():
