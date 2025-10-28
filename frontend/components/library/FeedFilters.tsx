@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllSites } from '@/lib/api/sites';
+import { getSites } from '@/lib/api/sites';
 
 interface Site {
   id: string;
@@ -28,7 +28,7 @@ export function FeedFilters({ filters, onChange }: FeedFiltersProps) {
 
   const loadSites = async () => {
     try {
-      const data = await getAllSites();
+      const data = await getSites();
       setSites(data);
     } catch (error) {
       console.error('Failed to load sites:', error);
