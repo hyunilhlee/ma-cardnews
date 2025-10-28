@@ -22,6 +22,55 @@ scraper = WebScraper()
 # card_generator = CardNewsGenerator()  # 프로젝트별로 모델이 다를 수 있으므로 필요시 생성
 
 
+@router.post("/summarize", response_model=SummarizeResponse)
+async def summarize_content(
+    source_type: str,
+    source_url: str,
+    additional_instructions: Optional[str] = None
+):
+    """
+    콘텐츠 요약 (프로젝트 생성 전)
+    
+    - URL 스크래핑 후 요약
+    - 추가 지시사항 반영 (길이, 톤 등)
+    """
+    try:
+        logger.info(f"Summarizing content from: {source_url}")
+        
+        # URL 스크래핑
+        scraped_data = scraper.scrape_url(source_url)
+        content = scraped_data['content']
+        
+        if not content or len(content) < 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="콘텐츠를 가져올 수 없거나 너무 짧습니다."
+            )
+        
+        # 요약 생성
+        summarizer = AISummarizer(model='gpt-4.1-nano')
+        summary_result = summarizer.summarize(
+            content,
+            max_length=None,
+            additional_instructions=additional_instructions
+        )
+        
+        return SummarizeResponse(
+            summary=summary_result['summary'],
+            keywords=summary_result['keywords'],
+            recommended_cards=summary_result['card_count']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to summarize content: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"요약 생성 실패: {str(e)}"
+        )
+
+
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(project: ProjectCreate):
     """

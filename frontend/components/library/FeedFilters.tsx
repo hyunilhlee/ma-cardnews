@@ -65,19 +65,25 @@ export function FeedFilters({ filters, onChange }: FeedFiltersProps) {
     onChange({ siteId: null, keyword: '', yearMonth: null, page: 1 });
   };
 
-  // 최근 12개월 생성
+  // 2025년 9월부터 현재까지의 월 생성
   const generateMonthOptions = () => {
     const options = [];
     const now = new Date();
+    const startDate = new Date(2025, 8, 1); // 2025년 9월 (0-indexed: 8)
     
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+    // 시작 월부터 현재까지 반복
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      const label = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
       options.push({ value: yearMonth, label });
+      
+      // 다음 월로 이동
+      currentDate.setMonth(currentDate.getMonth() + 1);
     }
     
-    return options;
+    // 최신순으로 정렬 (역순)
+    return options.reverse();
   };
 
   return (

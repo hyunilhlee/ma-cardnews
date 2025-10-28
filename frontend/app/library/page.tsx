@@ -51,42 +51,18 @@ export default function LibraryPage() {
   };
 
   const handleCreateCardnews = async (item: LibraryFeedItem) => {
-    // 중복 생성 방지
-    if (creatingIds.has(item.id)) {
-      toast.error('이미 생성 중입니다');
-      return;
-    }
-
-    setCreatingIds(prev => new Set([...prev, item.id]));
+    // 요약 페이지로 이동 (RSS 게시물 정보 전달)
+    // URL 파라미터로 전달
+    const params = new URLSearchParams({
+      source: 'rss',
+      url: item.url,
+      title: item.title,
+      site_id: item.source.site_id || '',
+      site_name: item.source.site_name,
+      rss_post_id: item.id
+    });
     
-    try {
-      toast.loading('카드뉴스를 생성하고 있습니다...', { id: 'creating' });
-      
-      // URL에서 전체 콘텐츠를 가져와야 하지만, 
-      // 여기서는 요약을 content로 사용 (실제로는 스크래핑 필요)
-      const response = await createCardnewsFromFeed({
-        rss_post_id: item.id,
-        site_id: item.source.site_id || '',
-        url: item.url,
-        title: item.title,
-        content: item.summary  // 실제로는 전체 콘텐츠 필요
-      });
-      
-      toast.success('카드뉴스 생성 완료!', { id: 'creating' });
-      
-      // 편집 페이지로 이동
-      router.push(`/edit/${response.project_id}`);
-      
-    } catch (error: any) {
-      console.error('Failed to create cardnews:', error);
-      toast.error(error.message || '카드뉴스 생성 실패', { id: 'creating' });
-    } finally {
-      setCreatingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(item.id);
-        return newSet;
-      });
-    }
+    router.push(`/summarize?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {

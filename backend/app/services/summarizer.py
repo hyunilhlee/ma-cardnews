@@ -17,7 +17,12 @@ class AISummarizer:
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = model or settings.OPENAI_MODEL
     
-    def summarize(self, text: str, max_length: int = 200) -> Dict:
+    def summarize(
+        self, 
+        text: str, 
+        max_length: int = 200,
+        additional_instructions: Optional[str] = None
+    ) -> Dict:
         """
         텍스트를 요약하고 키워드 추출
         
@@ -38,7 +43,7 @@ class AISummarizer:
         truncated_text = self._truncate_text(text, max_chars=3000)
         
         # 1. 핵심 요약 생성
-        summary = self._generate_summary(truncated_text, max_length)
+        summary = self._generate_summary(truncated_text, max_length, additional_instructions)
         logger.info(f"Summary generated: {summary[:50]}...")
         
         # 2. 키워드 추출
@@ -55,7 +60,12 @@ class AISummarizer:
             'card_count': card_count
         }
     
-    def _generate_summary(self, text: str, max_length: int) -> str:
+    def _generate_summary(
+        self, 
+        text: str, 
+        max_length: int,
+        additional_instructions: Optional[str] = None
+    ) -> str:
         """
         GPT를 사용하여 요약 생성
         
@@ -79,6 +89,10 @@ class AISummarizer:
         
         system_message = system_messages.get(detected_lang, system_messages['en'])
         prompt = SUMMARIZE_PROMPT.format(text=text, max_length=max_length)
+        
+        # 추가 지시사항이 있으면 프롬프트에 추가
+        if additional_instructions:
+            prompt += f"\n\n추가 요구사항: {additional_instructions}"
         
         try:
             response = self.client.chat.completions.create(
