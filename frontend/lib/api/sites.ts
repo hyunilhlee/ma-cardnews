@@ -4,7 +4,7 @@
 
 import { Site, SiteCreate, SiteUpdate, SiteResponse, SiteValidationResponse, TriggerCrawlResponse } from '@/lib/types/site';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
  * 모든 사이트 목록 조회
