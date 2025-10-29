@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -14,7 +14,7 @@ interface SummaryOptions {
   customRequest: string;
 }
 
-export default function SummarizePage() {
+function SummarizeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -297,6 +297,34 @@ export default function SummarizePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SummarizePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              📝 요약 생성
+            </h1>
+            <p className="text-gray-600">
+              잠시만 기다려주세요...
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <SummarizeContent />
+    </Suspense>
   );
 }
 
