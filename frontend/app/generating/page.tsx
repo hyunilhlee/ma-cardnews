@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { createCardnewsFromFeed } from '@/lib/api/library';
 
-export default function GeneratingPage() {
+function GeneratingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -95,6 +95,28 @@ export default function GeneratingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GeneratingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-8">
+            <div className="inline-block relative">
+              <div className="w-32 h-32 border-8 border-blue-200 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-32 h-32 border-8 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            🎨 카드뉴스 생성 중...
+          </h1>
+        </div>
+      </div>
+    }>
+      <GeneratingContent />
+    </Suspense>
   );
 }
 
