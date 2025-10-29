@@ -160,14 +160,18 @@ class LibraryService:
     ) -> List[Dict]:
         """DB에 저장된 RSS 게시물 조회"""
         try:
-            # Firestore에서 RSS 게시물 조회
+            logger.info(f"Fetching RSS posts from Firestore (site_id={site_id}, year_month={year_month})")
+            
+            # Firestore에서 RSS 게시물 조회 (limit=500으로 제한)
             rss_posts = get_all_rss_posts(
                 site_id=site_id,
                 start_date=start_date,
                 end_date=end_date,
                 year_month=year_month,
-                limit=1000
+                limit=500  # 성능 향상을 위해 500개로 제한
             )
+            
+            logger.info(f"Successfully fetched {len(rss_posts)} RSS posts from Firestore")
             
             # FeedItem 형식으로 변환
             feed_items = []

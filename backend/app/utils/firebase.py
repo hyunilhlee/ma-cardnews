@@ -645,7 +645,7 @@ def get_all_rss_posts(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     year_month: Optional[str] = None,
-    limit: int = 1000
+    limit: int = 100  # 기본값 100으로 축소
 ) -> List[Dict]:
     """
     RSS 게시물 목록 조회
@@ -662,42 +662,61 @@ def get_all_rss_posts(
     """
     db = get_db()
     if db is None:
+        logger.warning("Firestore not initialized, returning empty list")
         return []
     
-    query = db.collection('rss_posts')
-    
-    # 사이트 필터
-    if site_id:
-        query = query.where('site_id', '==', site_id)
-    
-    # 연월 필터 (YYYY-MM)
-    if year_month:
-        from datetime import datetime
-        import calendar
+    try:
+        logger.info(f"Querying RSS posts: site_id={site_id}, year_month={year_month}, limit={limit}")
         
-        # YYYY-MM을 파싱하여 해당 월의 시작일과 끝일 계산
-        year, month = map(int, year_month.split('-'))
-        start_date = datetime(year, month, 1)
-        last_day = calendar.monthrange(year, month)[1]
-        end_date = datetime(year, month, last_day, 23, 59, 59)
-    
-    # 날짜 필터
-    if start_date:
-        query = query.where('published_at', '>=', start_date)
-    if end_date:
-        query = query.where('published_at', '<=', end_date)
-    
-    # 최신순 정렬
-    query = query.order_by('published_at', direction='DESCENDING')
-    
-    # 제한
-    query = query.limit(limit)
-    
-    posts = []
-    for doc in query.stream():
-        posts.append(doc.to_dict())
-    
-    return posts
+        query = db.collection('rss_posts')
+        
+        # ⚠️ Firestore 복합 쿼리 제한 우회:
+        # 여러 where + order_by를 사용하면 인덱스 필요
+        # → 단순 쿼리로 변경하고, 메모리에서 필터링
+        
+        # 사이트 필터만 적용 (where + order_by 조합 가능)
+        if site_id:
+            query = query.where('site_id', '==', site_id)
+        
+        # 최신순 정렬
+        query = query.order_by('published_at', direction='DESCENDING')
+        
+        # 제한 (성능 향상)
+        query = query.limit(limit)
+        
+        posts = []
+        for doc in query.stream():
+            post_data = doc.to_dict()
+            
+            # 메모리에서 날짜 필터링
+            if year_month:
+                published_at = post_data.get('published_at')
+                if published_at:
+                    if isinstance(published_at, datetime):
+                        post_month = published_at.strftime('%Y-%m')
+                        if post_month != year_month:
+                            continue
+            
+            if start_date:
+                published_at = post_data.get('published_at')
+                if published_at and isinstance(published_at, datetime):
+                    if published_at < start_date:
+                        continue
+            
+            if end_date:
+                published_at = post_data.get('published_at')
+                if published_at and isinstance(published_at, datetime):
+                    if published_at > end_date:
+                        continue
+            
+            posts.append(post_data)
+        
+        logger.info(f"Successfully fetched {len(posts)} RSS posts")
+        return posts
+        
+    except Exception as e:
+        logger.error(f"Failed to get RSS posts: {str(e)}", exc_info=True)
+        return []
 
 
 def update_rss_post(post_id: str, data: Dict) -> Dict:
